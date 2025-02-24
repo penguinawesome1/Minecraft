@@ -1,17 +1,4 @@
-function generatePerlinNoise2D({ width, height, scale = 10.0, octaves = 6, persistence = 0.5, lacunarity = 2.0, seed = null }) {
-    if (seed !== null) {
-        Math.random = seededRandom(seed); // Use a seeded random function
-    }
-
-    function seededRandom(seed) {
-        const m = 2**35 - 31;
-        const a = 185852;
-        let s = seed % m;
-        return function() {
-            return (s = s * a % m) / m;
-        };
-    }
-
+function generatePerlinNoise2D({ width, height, scale = 10.0, octaves = 6, persistence = 0.5, lacunarity = 2.0 }) {
     function fade(t) {
         return t * t * t * (t * (t * 6 - 15) + 10);
     }

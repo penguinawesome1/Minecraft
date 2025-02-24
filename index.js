@@ -2,15 +2,35 @@ const canvas = document.getElementById("canvas");
 const c = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+let zoom = 2;
+
+window.addEventListener('wheel', (e) => {
+    console.log(zoom);
+    const delta = Math.sign(e.deltaY); // -1 for down, 1 for up, 0 for no movement
+    zoom += delta * .1;
+  
+    // clamp zoom
+    zoom = Math.max(1.2, Math.min(3, zoom));
+    scaledCanvas.scale = zoom;
+});
 
 const scaledCanvas = {
-    scale: 2.8,
-    // scale: 1,
+    scale: zoom,
     width: canvas.width / this.scale,
     height: canvas.height / this.scale,
     transX: 0,
     transY: 0,
 }
+
+function seededRandom(seed) {
+    const m = 2**35 - 31;
+    const a = 185852;
+    let s = seed % m;
+    return function() {
+        return (s = s * a % m) / m;
+    };
+}
+Math.random = seededRandom(23);
 
 function getRandomChance(n) {
     return Math.floor(Math.random() * n) === 0;
@@ -23,7 +43,6 @@ const noiseMap = generatePerlinNoise2D({
     octaves: 8,
     persistence: 0.6,
     lacunarity: 2,
-    seed: 23,
 });
 
 map = [];
@@ -33,14 +52,10 @@ for (let i_a = 0; i_a < 50; i_a++) {
             x: i_a,
             y: i_b,
         });
-        const block = new Tile({
+        const block = new Sprite({
             position: {
                 x: isoBlock.x,
                 y: isoBlock.y + noiseMap[i_a][i_b] * 200,
-            },
-            grid: {
-                x: i_a,
-                y: i_b,
             },
             imageSrc: getRandomChance(20) ? `./img/tiles/tile_025.png` : `./img/tiles/tile_023.png`,
         });
@@ -132,19 +147,25 @@ canvas.addEventListener("keyup", (event) => {
 
 let highlightedBlock = null;
 canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = Math.floor(e.clientX - rect.left);
-    const mouseY = Math.floor(e.clientY - rect.top);
-    const mouseGrid = to_grid_coordinate({
-        x: mouseX / scaledCanvas.scale,
-        y: mouseY / scaledCanvas.scale,
-    });
+    const mouse = {
+        position: {
+            x: e.clientX / scaledCanvas.scale,
+            y: e.clientY / scaledCanvas.scale,
+        },
+        width: 1,
+        height: 1,
+    }
 
     for (let i = map.length - 1; i >= 0; i--) {
         const block = map[i];
-        if (highlightedBlock) highlightedBlock.position.y += 5;
-        highlightedBlock = null;
-        if (block.grid.x === mouseGrid.x && block.grid.y === mouseGrid.y) {
+        if (highlightedBlock) {
+            highlightedBlock.position.y += 5;
+            highlightedBlock = null;
+        }
+        if (collision({
+            object1: mouse,
+            object2: block,
+        })) {
             highlightedBlock = block;
             highlightedBlock.position.y -= 5;
             break;
