@@ -13,7 +13,13 @@ class Player extends Life {
             position: this.position,
             width: 0,
             height: 0,
-        }
+        };
+
+        this.cameraBox = {
+            position: this.position,
+            width: 0,
+            height: 0,
+        };
 
         this.jumps = true;
         this.lastDirection = "right";
@@ -30,6 +36,15 @@ class Player extends Life {
     update() {
         this.updateFrames();
         this.updateHitbox();
+
+        this.updateCameraBox();
+        // c.fillStyle = 'rgba(0, 255, 0, 0.2)';
+        // c.fillRect(
+        //     this.cameraBox.position.x,
+        //     this.cameraBox.position.y,
+        //     this.cameraBox.width,
+        //     this.cameraBox.height
+        // );
         
         this.draw();
 
@@ -37,10 +52,49 @@ class Player extends Life {
         
         this.applyFriction();
         this.updateHitbox();
-        // this.respondToHorizontalCollision();S
+        // this.respondToHorizontalCollision();
 
         // this.checkForHit();
         // this.checkForDeath();
+    }
+
+    updateCameraBox() {
+        const w = 1000 / scaledCanvas.scale;
+        const h = 600 / scaledCanvas.scale;
+        this.cameraBox = {
+            position: {
+                x: this.position.x + this.width / 2 - w/2,
+                y: this.position.y + this.height / 2 - h/2,
+            },
+            width: w,
+            height: h,
+        };
+    }
+
+    shouldPanCameraLeft({ canvas, camera, scaledCanvas }) {
+        const cameraBoxRightSide = this.cameraBox.position.x + this.cameraBox.width;
+        if (cameraBoxRightSide >= canvas.width / scaledCanvas.scale - camera.position.x) {
+            camera.position.x -= this.velocity.x;
+        }
+    }
+
+    shouldPanCameraRight({ camera }) {
+        if (this.cameraBox.position.x <= -camera.position.x) {
+            camera.position.x -= this.velocity.x;
+        }
+    }
+
+    shouldPanCameraUp({ canvas, camera, scaledCanvas }) {
+        const cameraBoxBottomSide = this.cameraBox.position.y + this.cameraBox.height;
+        if (cameraBoxBottomSide >= canvas.height / scaledCanvas.scale - camera.position.y) {
+            camera.position.y -= this.velocity.y;
+        }
+    }
+
+    shouldPanCameraDown({ camera }) {
+        if (this.cameraBox.position.y <= -camera.position.y) {
+            camera.position.y -= this.velocity.y;
+        }
     }
 
     applyFriction() {
@@ -48,22 +102,12 @@ class Player extends Life {
         this.velocity.y *= frictionMultiplier;
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
-    }
 
-    checkForHit() {
-        // if (!this.isAttacking || this.otherPlayer.dashing) return;
+        if (this.velocity.x > 0) player1.shouldPanCameraLeft({ canvas, camera, scaledCanvas });
+        else if (this.velocity.x < 0) player1.shouldPanCameraRight({ camera });
 
-        // if (collision({
-        //     object1: this.attackBox,
-        //     object2: this.otherPlayer.hitbox,
-        // })) {
-        //     const angle = calcAngle({
-        //         object1: this.attackBox,
-        //         object2: this.otherPlayer.hitbox,
-        //     });
-        //     this.otherPlayer.velocity.x += Math.cos(angle) * 2000 / this.otherPlayer.healthBar.value;
-        //     this.otherPlayer.velocity.y += Math.sin(angle) * 700 / this.otherPlayer.healthBar.value;
-        // }
+        if (this.velocity.y > 0) player1.shouldPanCameraUp({ canvas, camera, scaledCanvas });
+        else if (this.velocity.y < 0) player1.shouldPanCameraDown({ camera });
     }
 
     updateHitbox() {
@@ -87,42 +131,22 @@ class Player extends Life {
     }
 
     checkForKeys() {        
-        const v = {
+        const k = {
             x: 0,
             y: 0,
         }
-        if (this.keys.left) v.x--;
-        if (this.keys.right) v.x++;
-        if (this.keys.up) v.y--;
-        if (this.keys.down) v.y++;
+        if (this.keys.left) k.x--;
+        if (this.keys.right) k.x++;
+        if (this.keys.up) k.y--;
+        if (this.keys.down) k.y++;
 
-        if (v.x !== 0 && v.y !== 0) {
-            v.x *= .7;
-            v.y *= .7;
+        if (k.x !== 0 && k.y !== 0) {
+            k.x *= .7;
+            k.y *= .7;
         }
-        console.log(v.x, v.y, this.keys.left)
 
-        this.velocity.x += v.x;
-        this.velocity.y += v.y;
-
-        // let sprite = "Idle";
-        // if (this.keys.right && !this.keys.left) {
-        //     sprite = "Run";
-        //     this.velocity.x += playerSpeed;
-        //     if (!this.isAttacking) this.lastDirection = "right";
-        // } else if (this.keys.left && !this.keys.right) {
-        //     sprite = "RunLeft";
-        //     this.velocity.x += -playerSpeed;
-        //     if (!this.isAttacking) this.lastDirection = "left";
-        // } else if (this.velocity.y === 0) {
-        //     if (this.lastDirection === "right") {
-        //         sprite = "Idle";
-        //     } else {
-        //         sprite = "IdleLeft";
-        //     }
-        // }
-
-        // this.switchSprite(sprite);
+        this.velocity.x += k.x;
+        this.velocity.y += k.y;
     }
 
     respondToHorizontalCollision() {

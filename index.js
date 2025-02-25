@@ -3,12 +3,15 @@ const c = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 let zoom = 2;
+// Sprite size
+const w = 32;
+const h = 32;
 
 function updateHoverBlock(e) {
     const mouse = {
         position: {
-            x: e.clientX / scaledCanvas.scale,
-            y: e.clientY / scaledCanvas.scale,
+            x: e.clientX / scaledCanvas.scale - camera.position.x,
+            y: e.clientY / scaledCanvas.scale - camera.position.y,
         },
         width: 1,
         height: 1,
@@ -57,9 +60,7 @@ const scaledCanvas = {
     scale: zoom,
     width: canvas.width / this.scale,
     height: canvas.height / this.scale,
-    transX: 0,
-    transY: 0,
-}
+};
 
 function seededRandom(seed) {
     const m = 2**35 - 31;
@@ -69,41 +70,43 @@ function seededRandom(seed) {
         return (s = s * a % m) / m;
     };
 }
-Math.random = seededRandom(23);
+Math.random = seededRandom(238);
 
 function getRandomChance(n) {
     return Math.floor(Math.random() * n) === 0;
 }
 
-const noiseMap = generatePerlinNoise2D({
-    width: 50,
-    height: 50,
-    scale: 40,
-    octaves: 8,
-    persistence: 0.6,
-    lacunarity: 2,
-});
-
+const perlin = new Perlin();
 map = [];
-for (let i_a = 0; i_a < 50; i_a++) {
-    for (let i_b = 0; i_b < 50; i_b++) {
-        const isoBlock = to_screen_coordinate({
-            x: i_a,
-            y: i_b,
-        });
-        const block = new Sprite({
-            position: {
-                x: isoBlock.x,
-                y: isoBlock.y + noiseMap[i_a][i_b] * 200,
-            },
-            imageSrc: getRandomChance(20) ? `./img/tiles/tile_025.png` : `./img/tiles/tile_023.png`,
-        });
-        map.push(block);
+function generateChunk(chunkX, chunkY, chunkSize = 16) {
+    for (let y = 0; y < chunkSize; y++) {
+        for (let x = 0; x < chunkSize; x++) {
+            const worldX = chunkX * chunkSize + x;
+            const worldY = chunkY * chunkSize + y;
+            const noiseVal = perlin.octaveNoise(worldX / 16.0, worldY / 16.0, 6, .5); // Adjust scaling for terrain features.
+
+            const isoBlock = to_screen_coordinate({ x: worldX, y: worldY });
+            const block = new Sprite({
+                position: {
+                    x: isoBlock.x,
+                    y: isoBlock.y + noiseVal * 100,
+                },
+                imageSrc: getRandomChance(20) ? `./img/tiles/tile_025.png` : `./img/tiles/tile_023.png`,
+            });
+            map.push(block);
+        }
     }
 }
 
-const gravity = 0.3;
-const frictionMultiplier = 0.9;
+for (let cx = 0; cx < 4; cx++) {
+    for (let cy = 0; cy < 4; cy++) {
+        generateChunk(cx,cy);
+    }
+}
+
+// const singleNoise = perlin.noise(2.5, 3.7);
+
+const frictionMultiplier = 0.45;
 const playerSpeed = 0.3;
 const jumpStrength = 6;
 
@@ -128,7 +131,10 @@ collisions2D.forEach((row, y) => {
 });
 
 const player1 = new Player({
-    position: { x: 100, y: 100 },
+    position: {
+        x: 0,
+		y: 500,
+    },
     scale: 1,
     collisionBlocks,
     imageSrc: `./img/player/Idle.png`,
@@ -142,6 +148,13 @@ const player1 = new Player({
     }
 });
 
+const camera = {
+    position: {
+        x: -player1.position.x + window.innerWidth / scaledCanvas.scale / 2,
+		y: -player1.position.y + window.innerHeight / scaledCanvas.scale / 2,
+    },
+};
+
 function animate() {
     window.requestAnimationFrame(animate);
 
@@ -151,10 +164,9 @@ function animate() {
 
     c.save();
     c.scale(scaledCanvas.scale, scaledCanvas.scale);
-    c.translate(scaledCanvas.transX, scaledCanvas.transY);
-
+    c.translate(camera.position.x, camera.position.y);
+    
     for (const block of map) {
-        // block.position.x += .1;
         block.update();
     }
 
@@ -163,17 +175,6 @@ function animate() {
     // });
 
     player1.update();
-
-    for (let i = map.length - 1; i >= 0; i--) {
-        const block = map[i];
-        if (collision({
-            object1: player1.hitbox,
-            object2: block,
-        })) {
-            map.splice(map.indexOf(block), 1);
-            break;
-        }
-    }
 
     c.restore();
 }

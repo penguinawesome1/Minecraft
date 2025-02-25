@@ -8,8 +8,7 @@ class Life extends Sprite {
         animations
     }) {
         super({ position, imageSrc, frameRate, scale });
-
-        this.position = position;
+        
         this.velocity = {
             x: 0,
             y: 0,

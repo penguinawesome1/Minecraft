@@ -1,75 +1,77 @@
-function generatePerlinNoise2D({ width, height, scale = 10.0, octaves = 6, persistence = 0.5, lacunarity = 2.0 }) {
-    function fade(t) {
-        return t * t * t * (t * (t * 6 - 15) + 10);
+class Perlin {
+    constructor() {
+        this.p = new Uint8Array(512); // Use Uint8Array for performance
+        for (let i = 0; i < 256; i++) {
+            this.p[i] = i;
+        }
+        for (let i = 255; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.p[i], this.p[j]] = [this.p[j], this.p[i]];
+        }
+        for (let i = 0; i < 256; i++) { // Duplicate directly into Uint8Array
+            this.p[i + 256] = this.p[i];
+        }
+    
+        this.gradVectors = new Float32Array([ // Use Float32Array for performance
+            1, 1, -1, 1, 1, -1, -1, -1,
+            1, 0, -1, 0, 0, 1, 0, -1,
+            1, 1, 0, 1, -1, 1, 1, 0,
+            -1, 0, 0, -1, 1, -1, -1, -1
+        ]);
     }
-
-    function lerp(t, a, b) {
+  
+    lerp(a, b, t) {
         return a + t * (b - a);
     }
-
-    function grad(hash, x, y) {
-        const h = hash & 15;
-        const gradVectors = [
-            x + y, x, y, 0,
-            -x + y, -x, -y, 0,
-            x - y, 0, -x, y,
-            -y - x, 0, 0, -y
-        ];
-        return gradVectors[h];
+  
+    fade(t) {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    }
+  
+    grad(hash, x, y) {
+        const h = (hash & 15) << 1; // Pre-calculate the index
+        return x * this.gradVectors[h] + y * this.gradVectors[h + 1];
+    }
+  
+    noise(x, y) {
+        const X = Math.floor(x) & 255;
+        const Y = Math.floor(y) & 255;
+        x -= Math.floor(x);
+        y -= Math.floor(y);
+    
+        const u = this.fade(x);
+        const v = this.fade(y);
+    
+        const aa = this.p[this.p[X] + Y];
+        const ab = this.p[this.p[X] + Y + 1];
+        const ba = this.p[this.p[X + 1] + Y];
+        const bb = this.p[this.p[X + 1] + Y + 1];
+    
+        const g1 = this.grad(aa, x, y);
+        const g2 = this.grad(ba, x - 1, y);
+        const g3 = this.grad(ab, x, y - 1);
+        const g4 = this.grad(bb, x - 1, y - 1);
+    
+        const l1 = this.lerp(g1, g2, u);
+        const l2 = this.lerp(g3, g4, u);
+        return this.lerp(l1, l2, v);
     }
 
-    function noise(x, y) {
-        const x0 = Math.floor(x);
-        const y0 = Math.floor(y);
-        const x1 = x0 + 1;
-        const y1 = y0 + 1;
-      
-        const sx = x - x0;
-        const sy = y - y0;
-      
-        const n0 = grad(p[x0 + p[y0]], sx, sy);
-        const n1 = grad(p[x1 + p[y0]], sx - 1, sy);
-        const ix0 = lerp(fade(sx), n0, n1);
-      
-        const n2 = grad(p[x0 + p[y1]], sx, sy - 1);
-        const n3 = grad(p[x1 + p[y1]], sx - 1, sy - 1);
-        const ix1 = lerp(fade(sx), n2, n3);
-      
-        return lerp(fade(sy), ix0, ix1);
-      }
-
-    const pSize = 256;
-    const p = Array.from({ length: pSize }, (_, i) => i);
-    for (let i = p.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [p[i], p[j]] = [p[j], p[i]];
-    }
-    const pExtended = p.concat(p); // Duplicate
-
-    const noiseMap = Array.from({ length: height }, () => Array(width).fill(0.0));
-
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            let frequency = 1.0;
-            let amplitude = 1.0;
-            let total = 0.0;
-            let maxValue = 0.0;
-
-            for (let i = 0; i < octaves; i++) {
-            const sampleX = x / scale * frequency;
-            const sampleY = y / scale * frequency;
-
-            const perlinValue = noise(sampleX, sampleY);
-            total += perlinValue * amplitude;
+    octaveNoise(x, y, octaves, persistence) {
+        let total = 0;
+        let frequency = 1;
+        let amplitude = 1;
+        let maxValue = 0; // Used for normalizing result to 0.0 - 1.0
+    
+        for (let i = 0; i < octaves; i++) {
+            total += this.noise(x * frequency, y * frequency) * amplitude;
+        
             maxValue += amplitude;
-
-            frequency *= lacunarity;
+        
             amplitude *= persistence;
-            }
-
-            noiseMap[y][x] = total / maxValue;
+            frequency *= 2;
         }
+    
+        return total / maxValue;
     }
-
-    return noiseMap;
 }
