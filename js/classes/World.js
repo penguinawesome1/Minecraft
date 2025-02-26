@@ -101,16 +101,14 @@ class World {
 
   deleteBlock(type) {
     if (type === "hover") {
-      this.deleteBlocks.add(this.hoverBlock);
+      this.deleteBlocks.push(this.hoverBlock);
     }
   }
 
   updateHoverBlock() {
-    return;
     for (const [key, chunk] of this.chunkMap.entries()) {
-      console.log(`Processing array for key: ${key}`);
-      console.log(chunk);
-      for (const block of chunk) {
+      for (let i = chunk.length - 1; i >= 0; i--) {
+        const block = chunk[i];
         if (
           collision({
             object1: {
@@ -128,16 +126,16 @@ class World {
             object2: block,
           })
         ) {
-          hoverBlock.position.y += 5;
-          hoverBlock = block;
-          hoverBlock.position.y -= 5;
+          if (this.hoverBlock) this.hoverBlock.position.y += 5;
+          this.hoverBlock = block;
+          this.hoverBlock.position.y -= 5;
           return;
         }
       }
     }
-    if (hoverBlock) {
-      hoverBlock.position.y += 5;
-      hoverBlock = null;
+    if (this.hoverBlock) {
+      this.hoverBlock.position.y += 5;
+      this.hoverBlock = null;
     }
   }
 }

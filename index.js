@@ -3,7 +3,7 @@ const c = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 let zoom = 2;
-const frictionMultiplier = 0.8;
+const frictionMultiplier = 0.4;
 const playerSpeed = 0.3;
 const jumpStrength = 6;
 // Sprite size
@@ -63,7 +63,7 @@ const camera = {
   },
 };
 
-const world1 = new World({ seed: 1, renderDistance: 3, generateDistance: 3 });
+const world1 = new World({ seed: 1, renderDistance: 1, generateDistance: 1 });
 
 function animate() {
   window.requestAnimationFrame(animate);
@@ -151,7 +151,7 @@ window.addEventListener("wheel", (e) => {
   zoom -= delta * 0.1;
 
   // clamp zoom
-  zoom = Math.max(1.4, Math.min(2.8, zoom));
+  // zoom = Math.max(1.4, Math.min(2.8, zoom));
   scaledCanvas.scale = zoom;
 
   const newCenterX =
