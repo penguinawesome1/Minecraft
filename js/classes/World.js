@@ -12,6 +12,7 @@ class World {
     this.generateDistance = generateDistance;
     this.chunkSize = chunkSize;
     this.hoverBlock = null;
+    this.hoverBlockHeight = 3;
   }
 
   seededRandom(seed) {
@@ -35,6 +36,14 @@ class World {
     const playerChunkX = Math.floor(square.x / chunkSize);
     const playerChunkY = Math.floor(square.y / chunkSize);
 
+    const hoverGrid =
+      this.addBlockSrc && this.hoverBlock
+        ? to_grid_coordinate({
+            x: this.hoverBlock.position.x,
+            y: this.hoverBlock.position.y + this.hoverBlockHeight,
+          })
+        : 0;
+
     for (let cx = -renderDistance; cx <= renderDistance; cx++) {
       for (let cy = -renderDistance; cy <= renderDistance; cy++) {
         const key = `${playerChunkX + cx},${playerChunkY + cy}`;
@@ -43,38 +52,39 @@ class World {
         for (const block of chunk) {
           if (block.air && this.addBlockSrc) {
             const blockGrid = to_grid_coordinate(block.position);
-            const hoverGrid = to_grid_coordinate(this.hoverBlock.position);
-
-            if (blockGrid.x === hoverGrid.x + 1 || blockGrid.y === hoverGrid.y + 1) {
-              this.hoverBlock += 5;
+            const adjacentBlock =
+              (blockGrid.x === hoverGrid.x &&
+                blockGrid.y === hoverGrid.y + 1) ||
+              (blockGrid.x === hoverGrid.x + 1 && blockGrid.y === hoverGrid.y);
+            if (
+              adjacentBlock &&
+              collision({
+                object1: {
+                  position: {
+                    x:
+                      mouseScreen.position.x / scaledCanvas.scale -
+                      camera.position.x,
+                    y:
+                      mouseScreen.position.y / scaledCanvas.scale -
+                      camera.position.y,
+                  },
+                  width: 1,
+                  height: 1,
+                },
+                object2: block,
+              })
+            ) {
               block.image.src = this.addBlockSrc;
-              
-              this.hoverBlock = block;
+              block.air = false;
               this.addBlockSrc = null;
-
-              this.updateHoverBlock();
             }
-            //    && collision({
-            //   object1: {
-            //     position: {
-            //       x:
-            //         mouseScreen.position.x / scaledCanvas.scale -
-            //         camera.position.x,
-            //       y:
-            //         mouseScreen.position.y / scaledCanvas.scale -
-            //         camera.position.y,
-            //     },
-            //     width: 1,
-            //     height: 1,
-            //   },
-            //   object2: block,
-            // })) {
           }
 
           block.update();
         }
       }
     }
+    this.addBlockSrc = null;
   }
 
   async generateChunks(
@@ -132,9 +142,8 @@ class World {
     }
   }
 
-  addBlock(renderDistance = this.renderDistance, chunkSize = this.chunkSize) {
+  addBlock(src = `./img/tiles/tile_061.png`) {
     if (!this.hoverBlock) return;
-    const src = `./img/tiles/tile_000.png`;
     this.addBlockSrc = src;
   }
 
@@ -146,11 +155,12 @@ class World {
     const playerChunkX = Math.floor(square.x / chunkSize);
     const playerChunkY = Math.floor(square.y / chunkSize);
 
-    if (this.hoverBlock) this.hoverBlock.position.y += 5;
+    if (this.hoverBlock) this.hoverBlock.position.y += this.hoverBlockHeight;
     for (let cx = renderDistance; cx >= -renderDistance; cx--) {
       for (let cy = renderDistance; cy >= -renderDistance; cy--) {
         const key = `${playerChunkX + cx},${playerChunkY + cy}`;
         const chunk = this.chunkMap.get(key);
+        if (!chunk) continue;
         for (let i = chunk.length - 1; i >= 0; i--) {
           const block = chunk[i];
           if (
@@ -172,7 +182,7 @@ class World {
             })
           ) {
             this.hoverBlock = block;
-            this.hoverBlock.position.y -= 5;
+            this.hoverBlock.position.y -= this.hoverBlockHeight;
             return;
           }
         }
