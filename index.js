@@ -3,7 +3,7 @@ const c = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 let zoom = 2;
-const frictionMultiplier = 0.4;
+const frictionMultiplier = 0.8;
 const playerSpeed = 0.3;
 const jumpStrength = 6;
 // Sprite size
@@ -152,7 +152,7 @@ window.addEventListener("wheel", (e) => {
   zoom -= delta * 0.1;
 
   // clamp zoom
-  zoom = Math.max(1.2, Math.min(2.8, zoom));
+  // zoom = Math.max(1.2, Math.min(2.8, zoom));
   scaledCanvas.scale = zoom;
 
   const newCenterX =
