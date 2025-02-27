@@ -31,6 +31,27 @@ class Player extends Life {
       down: false,
       up: false,
     };
+
+    this.hotbar = [
+      {
+        name: "cobblestone",
+        imageSrc: `./img/tiles/tile_061.png`,
+        quantity: 1,
+      },
+      { name: "", imageSrc: `./img/tiles/tile_114.png`, quantity: 1 },
+      { name: "", imageSrc: `./img/tiles/tile_003.png`, quantity: 1 },
+      { name: "", imageSrc: `./img/tiles/tile_036.png`, quantity: 1 },
+      { name: "", imageSrc: `./img/tiles/tile_027.png`, quantity: 1 },
+      { name: "", imageSrc: `./img/tiles/tile_019.png`, quantity: 1 },
+      { name: "", imageSrc: `./img/tiles/tile_021.png`, quantity: 1 },
+      { name: "", imageSrc: `./img/tiles/tile_023.png`, quantity: 1 },
+      {
+        name: "",
+        imageSrc: `./img/tiles/tile_025.png`,
+        quantity: 1,
+      },
+    ];
+    this.selectedItem = 0;
   }
 
   update() {

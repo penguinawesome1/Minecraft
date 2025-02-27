@@ -3,6 +3,7 @@ const c = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 let zoom = 2;
+const hotbar = document.getElementById("hotbar");
 const frictionMultiplier = 0.8;
 const playerSpeed = 0.3;
 const jumpStrength = 6;
@@ -62,6 +63,11 @@ const player1 = new Player({
     },
   },
 });
+
+for (let i = 0; i < player1.hotbar.length; i++) {
+  itemImage = player1.hotbar[i].imageSrc;
+  hotbar.children[i].children[0].src = itemImage;
+}
 
 const camera = {
   position: {
@@ -133,7 +139,10 @@ canvas.addEventListener("mousemove", (e) => {
 
 canvas.addEventListener("mousedown", (e) => {
   if (e.button === 0) world1.deleteBlock("hover");
-  else if (e.button === 2) world1.addBlock();
+  else if (e.button === 2) {
+    const block = player1.hotbar[player1.selectedItem];
+    world1.addBlock(block);
+  }
 });
 
 canvas.addEventListener("contextmenu", (e) => {
@@ -143,12 +152,23 @@ canvas.addEventListener("contextmenu", (e) => {
 });
 
 window.addEventListener("wheel", (e) => {
+  const delta = Math.sign(e.deltaY); // -1 for down, 1 for up, 0 for no movement
+
+  if (!e.shiftKey) {
+    hotbar.children[player1.selectedItem].id = "";
+    player1.selectedItem =
+      (((player1.selectedItem + delta) % player1.hotbar.length) +
+        player1.hotbar.length) %
+      player1.hotbar.length;
+    hotbar.children[player1.selectedItem].id = "selected";
+    return;
+  }
+
   const originalCenterX =
     camera.position.x + window.innerWidth / scaledCanvas.scale / 2;
   const originalCenterY =
     camera.position.y + window.innerHeight / scaledCanvas.scale / 2;
 
-  const delta = Math.sign(e.deltaY); // -1 for down, 1 for up, 0 for no movement
   zoom -= delta * 0.1;
 
   // clamp zoom

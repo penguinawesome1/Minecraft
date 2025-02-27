@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYpE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,7 @@
     <script src="./js/classes/CollisionBlock.js" defer></script>
     <script src="./js/classes/Sprite.js" defer></script>
     <script src="./js/classes/Life.js" defer></script>
-    <script src="./js/classes/Player.js" defer></script>
+    <script src="./js/classes/player.js" defer></script>
     <script src="./js/classes/World.js" defer></script>
     <script src="./js/isometric.js" defer></script>
     <script src="./js/utils.js" defer></script>
@@ -17,8 +17,25 @@
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        #selected {
+            outline: 2px solid black;
+        }
+    </style>
 </head>
 <body>
+    <div id="hotbar" class="absolute bottom-5 left-1/2 -translate-x-1/2 ml-auto p-3 flex gap-3 bg-gray-300 rounded-lg border-4 border-b-[8px] border-white border-b-gray-500 outline outline-4 outline-gray-600">
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]" id="selected"><img src="" class="p-1 w-full object-contain"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain"></div>
+    </div>
     <canvas id="canvas" class="w-full h-svh bg-black"></canvas>
 </body>
 </html>

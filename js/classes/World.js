@@ -142,9 +142,9 @@ class World {
     }
   }
 
-  addBlock(src = `./img/tiles/tile_061.png`) {
+  addBlock(block = { imageSrc: `./img/tiles/unknown.png` }) {
     if (!this.hoverBlock) return;
-    this.addBlockSrc = src;
+    this.addBlockSrc = block.imageSrc;
   }
 
   async updateHoverBlock(
