@@ -16,6 +16,13 @@ const scaledCanvas = {
   height: canvas.height / this.scale,
 };
 
+const mouseScreen = {
+  position: {
+    x: 0,
+    y: 0,
+  },
+};
+
 const collisions = []; //////////////////////////
 const collisions2D = [];
 for (let i = 0; i < collisions.length; i += 32) {
@@ -63,7 +70,7 @@ const camera = {
   },
 };
 
-const world1 = new World({ seed: 1, renderDistance: 1, generateDistance: 1 });
+const world1 = new World({ seed: 1, renderDistance: 3, generateDistance: 3 });
 
 function animate() {
   window.requestAnimationFrame(animate);
@@ -76,12 +83,7 @@ function animate() {
 
   world1.generateChunks();
   world1.renderChunks();
-
-  // const singleNoise = perlin.noise(2.5, 3.7);
-
-  // collisionBlocks.forEach((collisionBlock) => {
-  //     collisionBlock.update();
-  // });
+  world1.updateHoverBlock();
 
   player1.update();
 
@@ -124,21 +126,20 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
-const mouseScreen = {
-  position: {
-    x: 0,
-    y: 0,
-  },
-};
-
 canvas.addEventListener("mousemove", (e) => {
   mouseScreen.position.x = e.clientX;
   mouseScreen.position.y = e.clientY;
-  world1.updateHoverBlock();
 });
 
 canvas.addEventListener("mousedown", (e) => {
-  if (world1.hoverBlock) world1.deleteBlock("hover");
+  if (e.button === 0) world1.deleteBlock("hover");
+  else if (e.button === 2) world1.addBlock();
+});
+
+canvas.addEventListener("contextmenu", (e) => {
+  if (e.button === 2) {
+    e.preventDefault();
+  }
 });
 
 window.addEventListener("wheel", (e) => {
@@ -151,7 +152,7 @@ window.addEventListener("wheel", (e) => {
   zoom -= delta * 0.1;
 
   // clamp zoom
-  // zoom = Math.max(1.4, Math.min(2.8, zoom));
+  zoom = Math.max(1.2, Math.min(2.8, zoom));
   scaledCanvas.scale = zoom;
 
   const newCenterX =
@@ -166,6 +167,4 @@ window.addEventListener("wheel", (e) => {
   camera.position.y -= offsetY;
 
   player1.panCamera();
-
-  world1.updateHoverBlock();
 });
