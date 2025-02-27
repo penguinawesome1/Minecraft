@@ -12,7 +12,6 @@ class World {
     this.generateDistance = generateDistance;
     this.chunkSize = chunkSize;
     this.hoverBlock = null;
-    this.willDeleteBlocks = [];
   }
 
   seededRandom(seed) {
@@ -42,6 +41,36 @@ class World {
         const chunk = this.chunkMap.get(key);
         if (!chunk) continue;
         for (const block of chunk) {
+          if (block.air && this.addBlockSrc) {
+            const blockGrid = to_grid_coordinate(block.position);
+            const hoverGrid = to_grid_coordinate(this.hoverBlock.position);
+
+            if (blockGrid.x === hoverGrid.x + 1 || blockGrid.y === hoverGrid.y + 1) {
+              this.hoverBlock += 5;
+              block.image.src = this.addBlockSrc;
+              
+              this.hoverBlock = block;
+              this.addBlockSrc = null;
+
+              this.updateHoverBlock();
+            }
+            //    && collision({
+            //   object1: {
+            //     position: {
+            //       x:
+            //         mouseScreen.position.x / scaledCanvas.scale -
+            //         camera.position.x,
+            //       y:
+            //         mouseScreen.position.y / scaledCanvas.scale -
+            //         camera.position.y,
+            //     },
+            //     width: 1,
+            //     height: 1,
+            //   },
+            //   object2: block,
+            // })) {
+          }
+
           block.update();
         }
       }
@@ -59,7 +88,7 @@ class World {
     for (let cx = -generateDistance; cx <= generateDistance; cx++) {
       for (let cy = -generateDistance; cy <= generateDistance; cy++) {
         const key = `${playerChunkX + cx},${playerChunkY + cy}`;
-        if (!this.chunkMap.get(key)) continue;
+        if (this.chunkMap.get(key)) continue;
         this.generateOneChunk(playerChunkX + cx, playerChunkY + cy, chunkSize);
       }
     }
@@ -83,7 +112,8 @@ class World {
         const block = new Sprite({
           position: {
             x: isoBlock.x,
-            y: isoBlock.y + noiseVal * 100,
+            // y: isoBlock.y + noiseVal * 100,
+            y: isoBlock.y,
           },
           imageSrc: `./img/tiles/tile_${tileNum}.png`,
         });
@@ -104,43 +134,8 @@ class World {
 
   addBlock(renderDistance = this.renderDistance, chunkSize = this.chunkSize) {
     if (!this.hoverBlock) return;
-    const src = `./img/tiles/tile_099.png`;
-
-    const square = to_grid_coordinate(player1.position);
-    const playerChunkX = Math.floor(square.x / chunkSize);
-    const playerChunkY = Math.floor(square.y / chunkSize);
-
-    for (let cx = renderDistance; cx >= -renderDistance; cx--) {
-      for (let cy = renderDistance; cy >= -renderDistance; cy--) {
-        const key = `${playerChunkX + cx},${playerChunkY + cy}`;
-        const chunk = this.chunkMap.get(key);
-        for (let i = chunk.length - 1; i >= 0; i--) {
-          const block = chunk[i];
-          if (
-            !block.air &&
-            collision({
-              object1: {
-                position: {
-                  x:
-                    mouseScreen.position.x / scaledCanvas.scale -
-                    camera.position.x,
-                  y:
-                    mouseScreen.position.y / scaledCanvas.scale -
-                    camera.position.y,
-                },
-                width: 1,
-                height: 1,
-              },
-              object2: block,
-            })
-          ) {
-            this.hoverBlock = block;
-            this.hoverBlock.position.y -= 5;
-            return;
-          }
-        }
-      }
-    }
+    const src = `./img/tiles/tile_000.png`;
+    this.addBlockSrc = src;
   }
 
   async updateHoverBlock(
