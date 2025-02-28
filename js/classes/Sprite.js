@@ -36,6 +36,11 @@ class Sprite {
       height: this.image.height,
     };
 
+    // if (this.name !== "air") {
+    //   c.fillStyle = "rgba(255, 0, 0, 0.5)";
+    //   c.fillRect(this.position.x, this.position.y, this.width, this.height);
+    // }
+
     c.drawImage(
       this.image,
       cropbox.position.x,
@@ -43,7 +48,7 @@ class Sprite {
       cropbox.width,
       cropbox.height,
       this.position.x,
-      this.position.y,
+      this.position.y + this.position.z,
       this.width,
       this.height
     );

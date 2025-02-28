@@ -1,11 +1,18 @@
 const canvas = document.getElementById("canvas");
 const c = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  c.scale(dpr, dpr);
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
 let zoom = 2;
 const hotbar = document.getElementById("hotbar");
-const frictionMultiplier = 0.8;
-const playerSpeed = 0.3;
+const frictionMultiplier = 0.4;
+const playerSpeed = 5;
 const jumpStrength = 6;
 // Sprite size
 const w = 32;
@@ -50,6 +57,7 @@ const player1 = new Player({
   position: {
     x: 0,
     y: 0,
+    z: 0,
   },
   scale: 1,
   collisionBlocks,
@@ -76,7 +84,7 @@ const camera = {
   },
 };
 
-const world1 = new World({ seed: 1, renderDistance: 3, generateDistance: 3 });
+const world1 = new World({ seed: 1, renderDistance: 1, generateDistance: 1 });
 
 function animate() {
   window.requestAnimationFrame(animate);

@@ -166,8 +166,8 @@ class Player extends Life {
       k.y *= 0.7;
     }
 
-    this.velocity.x += k.x;
-    this.velocity.y += k.y;
+    this.velocity.x += k.x * playerSpeed;
+    this.velocity.y += k.y * playerSpeed;
   }
 
   respondToHorizontalCollision() {

@@ -4,6 +4,7 @@ class World {
     renderDistance = 0,
     generateDistance = 0,
     chunkSize = 16,
+    chunkHeight = 8,
   }) {
     Math.random = this.seededRandom(seed);
     this.perlin = new Perlin();
@@ -11,6 +12,7 @@ class World {
     this.renderDistance = renderDistance;
     this.generateDistance = generateDistance;
     this.chunkSize = chunkSize;
+    this.chunkHeight = chunkHeight;
     this.hoverBlock = null;
     this.hoverBlockHeight = 3;
   }
@@ -36,55 +38,53 @@ class World {
     const playerChunkX = Math.floor(square.x / chunkSize);
     const playerChunkY = Math.floor(square.y / chunkSize);
 
-    const hoverGrid =
-      this.addBlockType && this.hoverBlock
-        ? to_grid_coordinate({
-            x: this.hoverBlock.position.x,
-            y: this.hoverBlock.position.y + this.hoverBlockHeight,
-          })
-        : 0;
-
     for (let cx = -renderDistance; cx <= renderDistance; cx++) {
       for (let cy = -renderDistance; cy <= renderDistance; cy++) {
         const key = `${playerChunkX + cx},${playerChunkY + cy}`;
         const chunk = this.chunkMap.get(key);
         if (!chunk) continue;
         for (const block of chunk) {
-          if (block.name === "air" && this.addBlockType) {
-            const blockGrid = to_grid_coordinate(block.position);
-            const adjacentBlock =
-              (blockGrid.x === hoverGrid.x &&
-                blockGrid.y === hoverGrid.y + 1) ||
-              (blockGrid.x === hoverGrid.x + 1 && blockGrid.y === hoverGrid.y);
-            if (
-              adjacentBlock &&
-              collision({
-                object1: {
-                  position: {
-                    x:
-                      mouseScreen.position.x / scaledCanvas.scale -
-                      camera.position.x,
-                    y:
-                      mouseScreen.position.y / scaledCanvas.scale -
-                      camera.position.y,
-                  },
-                  width: 1,
-                  height: 1,
-                },
-                object2: block,
-              })
-            ) {
-              block.name = this.addBlockType.name;
-              block.image.src = this.addBlockType.imageSrc;
-              this.addBlockType = null;
-            }
-          }
-
+          this.tryToPlace(block);
           block.update();
         }
       }
     }
     this.addBlockType = null;
+  }
+
+  tryToPlace(block, hoverGrid = this.hoverGrid) {
+    if (!this.addBlockType || block.name !== "air") return;
+
+    const blockGrid = to_grid_coordinate(block.position);
+    const adjacentBlock = [
+      { dx: 0, dy: 1, dz: 0 },
+      { dx: 1, dy: 0, dz: 0 },
+      { dx: 0, dy: 0, dz: 1 },
+    ].some(
+      (offset) =>
+        blockGrid.x === hoverGrid.x + offset.dx &&
+        blockGrid.y === hoverGrid.y + offset.dy
+      // && blockGrid.z === hoverGrid.z + offset.dz
+    );
+
+    if (
+      adjacentBlock &&
+      collision2D({
+        object1: {
+          position: {
+            x: mouseScreen.position.x / scaledCanvas.scale - camera.position.x,
+            y: mouseScreen.position.y / scaledCanvas.scale - camera.position.y,
+          },
+          width: 1,
+          height: 1,
+        },
+        object2: block,
+      })
+    ) {
+      block.name = this.addBlockType.name;
+      block.image.src = this.addBlockType.imageSrc;
+      this.addBlockType = null;
+    }
   }
 
   async generateChunks(
@@ -104,7 +104,12 @@ class World {
     }
   }
 
-  async generateOneChunk(chunkX, chunkY, chunkSize = this.chunkSize) {
+  async generateOneChunk(
+    chunkX,
+    chunkY,
+    chunkSize = this.chunkSize,
+    chunkHeight = this.chunkHeight
+  ) {
     const chunk = [];
     for (let y = 0; y < chunkSize; y++) {
       for (let x = 0; x < chunkSize; x++) {
@@ -113,30 +118,39 @@ class World {
         const noiseVal = this.perlin.octaveNoise(
           worldX / chunkSize,
           worldY / chunkSize,
-          6,
+          3,
           0.5
-        ); // Adjust scaling for terrain features.
+        );
+        const sigmoid = 1 / (1 + 2 ** (-noiseVal * 10));
+        for (let z = chunkHeight; z > 0; z--) {
+          if (sigmoid * chunkHeight > z) continue;
 
-        const isoBlock = to_screen_coordinate({ x: worldX, y: worldY });
-        const blockType = this.getRandomChance(20)
-          ? {
-              name: "dirt",
-              imageSrc: `./img/tiles/tile_021.png`,
-            }
-          : {
-              name: "grass",
-              imageSrc: `./img/tiles/tile_023.png`,
-            };
-        const block = new Sprite({
-          name: blockType.name,
-          position: {
-            x: isoBlock.x,
-            // y: isoBlock.y + noiseVal * 100,
-            y: isoBlock.y,
-          },
-          imageSrc: blockType.imageSrc,
-        });
-        chunk.push(block);
+          const isoBlock = to_screen_coordinate({ x: worldX, y: worldY });
+          const blockType = this.getRandomChance(20)
+            ? {
+                name: "dirt",
+                imageSrc: `./img/tiles/tile_021.png`,
+              }
+            : noiseVal < 0.25
+            ? {
+                name: "grass",
+                imageSrc: `./img/tiles/tile_023.png`,
+              }
+            : {
+                name: "stone",
+                imageSrc: `./img/tiles/tile_063.png`,
+              };
+          const block = new Sprite({
+            name: blockType.name,
+            position: {
+              x: isoBlock.x,
+              y: isoBlock.y,
+              z: z * 8,
+            },
+            imageSrc: blockType.imageSrc,
+          });
+          chunk.push(block);
+        }
       }
     }
     const key = `${chunkX},${chunkY}`;
@@ -154,6 +168,11 @@ class World {
   addBlock(block = { name: "", imageSrc: `./img/tiles/unknown.png` }) {
     if (!this.hoverBlock) return;
     this.addBlockType = block;
+
+    this.hoverGrid = to_grid_coordinate({
+      x: this.hoverBlock.position.x,
+      y: this.hoverBlock.position.y + this.hoverBlockHeight,
+    });
   }
 
   async updateHoverBlock(
@@ -174,8 +193,8 @@ class World {
           const block = chunk[i];
           if (
             block.name !== "air" &&
-            collision({
-              object1: {
+            collision2D({
+              object2: {
                 position: {
                   x:
                     mouseScreen.position.x / scaledCanvas.scale -
@@ -187,7 +206,7 @@ class World {
                 width: 1,
                 height: 1,
               },
-              object2: block,
+              object1: block,
             })
           ) {
             this.hoverBlock = block;
