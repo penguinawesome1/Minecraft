@@ -37,7 +37,7 @@ class World {
     const playerChunkY = Math.floor(square.y / chunkSize);
 
     const hoverGrid =
-      this.addBlockSrc && this.hoverBlock
+      this.addBlockType && this.hoverBlock
         ? to_grid_coordinate({
             x: this.hoverBlock.position.x,
             y: this.hoverBlock.position.y + this.hoverBlockHeight,
@@ -50,7 +50,7 @@ class World {
         const chunk = this.chunkMap.get(key);
         if (!chunk) continue;
         for (const block of chunk) {
-          if (block.air && this.addBlockSrc) {
+          if (block.name === "air" && this.addBlockType) {
             const blockGrid = to_grid_coordinate(block.position);
             const adjacentBlock =
               (blockGrid.x === hoverGrid.x &&
@@ -74,9 +74,9 @@ class World {
                 object2: block,
               })
             ) {
-              block.image.src = this.addBlockSrc;
-              block.air = false;
-              this.addBlockSrc = null;
+              block.name = this.addBlockType.name;
+              block.image.src = this.addBlockType.imageSrc;
+              this.addBlockType = null;
             }
           }
 
@@ -84,7 +84,7 @@ class World {
         }
       }
     }
-    this.addBlockSrc = null;
+    this.addBlockType = null;
   }
 
   async generateChunks(
@@ -146,14 +146,14 @@ class World {
   deleteBlock(type) {
     if (type === "hover") {
       if (!this.hoverBlock) return;
+      this.hoverBlock.name = "air";
       this.hoverBlock.image.src = "";
-      this.hoverBlock.air = true;
     }
   }
 
-  addBlock(block = { imageSrc: `./img/tiles/unknown.png` }) {
+  addBlock(block = { name: "", imageSrc: `./img/tiles/unknown.png` }) {
     if (!this.hoverBlock) return;
-    this.addBlockSrc = block.imageSrc;
+    this.addBlockType = block;
   }
 
   async updateHoverBlock(
@@ -173,7 +173,7 @@ class World {
         for (let i = chunk.length - 1; i >= 0; i--) {
           const block = chunk[i];
           if (
-            !block.air &&
+            block.name !== "air" &&
             collision({
               object1: {
                 position: {
