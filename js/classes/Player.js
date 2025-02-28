@@ -38,18 +38,14 @@ class Player extends Life {
         imageSrc: `./img/tiles/tile_061.png`,
         quantity: 1,
       },
-      { name: "", imageSrc: `./img/tiles/tile_114.png`, quantity: 1 },
-      { name: "", imageSrc: `./img/tiles/tile_003.png`, quantity: 1 },
-      { name: "", imageSrc: `./img/tiles/tile_036.png`, quantity: 1 },
-      { name: "", imageSrc: `./img/tiles/tile_027.png`, quantity: 1 },
-      { name: "", imageSrc: `./img/tiles/tile_019.png`, quantity: 1 },
-      { name: "", imageSrc: `./img/tiles/tile_021.png`, quantity: 1 },
-      { name: "", imageSrc: `./img/tiles/tile_023.png`, quantity: 1 },
-      {
-        name: "",
-        imageSrc: `./img/tiles/tile_025.png`,
-        quantity: 1,
-      },
+      { name: "grass", imageSrc: `./img/tiles/tile_023.png`, quantity: 1 },
+      { name: "dirt", imageSrc: `./img/tiles/tile_021.png`, quantity: 1 },
+      { name: "water", imageSrc: `./img/tiles/tile_114.png`, quantity: 1 },
+      { name: "mud", imageSrc: `./img/tiles/tile_003.png`, quantity: 1 },
+      { name: "shrub", imageSrc: `./img/tiles/tile_036.png`, quantity: 1 },
+      { name: "moss", imageSrc: `./img/tiles/tile_027.png`, quantity: 1 },
+      { name: "sprout", imageSrc: `./img/tiles/tile_019.png`, quantity: 1 },
+      { name: "farmland", imageSrc: `./img/tiles/tile_025.png`, quantity: 1 },
     ];
     this.selectedItem = 0;
   }

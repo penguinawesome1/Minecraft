@@ -138,10 +138,25 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 canvas.addEventListener("mousedown", (e) => {
-  if (e.button === 0) world1.deleteBlock("hover");
-  else if (e.button === 2) {
-    const block = player1.hotbar[player1.selectedItem];
-    world1.addBlock(block);
+  switch (e.button) {
+    case 0:
+      world1.deleteBlock("hover");
+      break;
+    case 1:
+      for (let i = 0; i < player1.hotbar.length; i++) {
+        const hasItem = player1.hotbar[i].name === world1.hoverBlock.name;
+        if (!hasItem) continue;
+
+        hotbar.children[player1.selectedItem].id = "";
+        player1.selectedItem = i;
+        hotbar.children[player1.selectedItem].id = "selected";
+        break;
+      }
+      break;
+    case 2:
+      const block = player1.hotbar[player1.selectedItem];
+      world1.addBlock(block);
+      break;
   }
 });
 

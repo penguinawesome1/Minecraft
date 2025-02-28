@@ -118,14 +118,23 @@ class World {
         ); // Adjust scaling for terrain features.
 
         const isoBlock = to_screen_coordinate({ x: worldX, y: worldY });
-        const tileNum = this.getRandomChance(20) ? "021" : "023";
+        const blockType = this.getRandomChance(20)
+          ? {
+              name: "dirt",
+              imageSrc: `./img/tiles/tile_021.png`,
+            }
+          : {
+              name: "grass",
+              imageSrc: `./img/tiles/tile_023.png`,
+            };
         const block = new Sprite({
+          name: blockType.name,
           position: {
             x: isoBlock.x,
             // y: isoBlock.y + noiseVal * 100,
             y: isoBlock.y,
           },
-          imageSrc: `./img/tiles/tile_${tileNum}.png`,
+          imageSrc: blockType.imageSrc,
         });
         chunk.push(block);
       }
