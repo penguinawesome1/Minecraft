@@ -10,15 +10,15 @@ class Sprite {
     this.name = name;
     this.position = position;
     this.scale = scale;
-    this.loaded = false;
+    this.frameRate = frameRate;
     this.image = new Image();
+    this.width = w;
+    this.height = h;
     this.image.onload = () => {
       this.width = (this.image.width / this.frameRate) * this.scale;
       this.height = this.image.height * this.scale;
-      this.loaded = true;
     };
     this.image.src = imageSrc;
-    this.frameRate = frameRate;
     this.currentFrame = 0;
     this.frameBuffer = frameBuffer;
     this.elapsedFrames = 0;
@@ -36,9 +36,14 @@ class Sprite {
       height: this.image.height,
     };
 
-    // if (this.name !== "air") {
+    // if (this.name === "air") {
     //   c.fillStyle = "rgba(255, 0, 0, 0.5)";
-    //   c.fillRect(this.position.x, this.position.y, this.width, this.height);
+    //   c.fillRect(
+    //     this.position.x,
+    //     this.position.y + this.position.z,
+    //     this.width,
+    //     this.height
+    //   );
     // }
 
     c.drawImage(
@@ -48,7 +53,7 @@ class Sprite {
       cropbox.width,
       cropbox.height,
       this.position.x,
-      this.position.y + this.position.z,
+      this.position.y - this.position.z,
       this.width,
       this.height
     );

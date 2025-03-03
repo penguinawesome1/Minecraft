@@ -9,6 +9,14 @@ class Player extends Life {
   }) {
     super({ position, imageSrc, frameRate, scale, animations });
 
+    this.spawn = { ...position };
+
+    this.velocity = {
+      x: 0,
+      y: 0,
+      z: 0,
+    };
+
     this.attackBox = {
       position: this.position,
       width: 0,
@@ -32,22 +40,59 @@ class Player extends Life {
       up: false,
     };
 
-    this.hotbar = [
-      {
-        name: "cobblestone",
-        imageSrc: `./img/tiles/tile_061.png`,
-        quantity: 1,
-      },
-      { name: "grass", imageSrc: `./img/tiles/tile_023.png`, quantity: 1 },
-      { name: "dirt", imageSrc: `./img/tiles/tile_021.png`, quantity: 1 },
-      { name: "water", imageSrc: `./img/tiles/tile_114.png`, quantity: 1 },
-      { name: "mud", imageSrc: `./img/tiles/tile_003.png`, quantity: 1 },
-      { name: "shrub", imageSrc: `./img/tiles/tile_036.png`, quantity: 1 },
-      { name: "moss", imageSrc: `./img/tiles/tile_027.png`, quantity: 1 },
-      { name: "sprout", imageSrc: `./img/tiles/tile_019.png`, quantity: 1 },
-      { name: "farmland", imageSrc: `./img/tiles/tile_025.png`, quantity: 1 },
-    ];
+    this.hotbar =
+      gamemode === "creative"
+        ? [
+            {
+              name: "cobblestone",
+              imageSrc: `../../img/tiles/tile_061.png`,
+              quantity: 1,
+            },
+            {
+              name: "grass",
+              imageSrc: `../../img/tiles/tile_023.png`,
+              quantity: 1,
+            },
+            {
+              name: "dirt",
+              imageSrc: `../../img/tiles/tile_021.png`,
+              quantity: 1,
+            },
+            {
+              name: "water",
+              imageSrc: `../../img/tiles/tile_114.png`,
+              quantity: 1,
+            },
+            {
+              name: "mud",
+              imageSrc: `../../img/tiles/tile_003.png`,
+              quantity: 1,
+            },
+            {
+              name: "shrub",
+              imageSrc: `../../img/tiles/tile_036.png`,
+              quantity: 1,
+            },
+            {
+              name: "moss",
+              imageSrc: `../../img/tiles/tile_027.png`,
+              quantity: 1,
+            },
+            {
+              name: "sprout",
+              imageSrc: `../../img/tiles/tile_019.png`,
+              quantity: 1,
+            },
+            {
+              name: "farmland",
+              imageSrc: `../../img/tiles/tile_025.png`,
+              quantity: 1,
+            },
+          ]
+        : [{}, {}, {}, {}, {}, {}, {}, {}, {}];
     this.selectedItem = 0;
+    this.maxHealth = 9;
+    this.selectedHeart = this.maxHealth;
   }
 
   update() {
@@ -55,6 +100,8 @@ class Player extends Life {
     this.updateHitbox();
 
     this.updateCameraBox();
+    this.panCamera();
+
     // c.fillStyle = "rgba(0, 0, 0, 0.2)";
     // c.fillRect(
     //   this.cameraBox.position.x,
@@ -67,13 +114,37 @@ class Player extends Life {
 
     this.checkForKeys();
 
-    this.applyFriction();
-    this.panCamera();
+    // this.applyGravity();
+    // this.respondToVerticalCollision();
     this.updateHitbox();
+
+    this.applyFriction();
     // this.respondToHorizontalCollision();
 
     // this.checkForHit();
-    // this.checkForDeath();
+    this.checkForDeath();
+  }
+
+  checkForDeath() {
+    if (this.position.z < -50) {
+      healthbar.children[this.selectedHeart].classList.add("hurt");
+      this.selectedHeart--;
+    }
+    if (this.selectedHeart < 0) toggleDeath();
+  }
+
+  respawn() {
+    this.position = { ...this.spawn };
+    this.velocity = {
+      x: 0,
+      y: 0,
+      z: 0,
+    };
+    for (const heart of healthbar.children) {
+      heart.classList.remove("hurt");
+    }
+    this.selectedHeart = this.maxHealth;
+    toggleDeath();
   }
 
   updateCameraBox() {
@@ -92,8 +163,8 @@ class Player extends Life {
   panCamera() {
     const negCameraX = -camera.position.x;
     const negCameraY = -camera.position.y;
-    const scaledWidth = window.innerWidth / scaledCanvas.scale;
-    const scaledHeight = window.innerHeight / scaledCanvas.scale;
+    const scaledWidth = scaledCanvas.width;
+    const scaledHeight = scaledCanvas.height;
 
     if (this.cameraBox.position.x < negCameraX) {
       camera.position.x = -this.cameraBox.position.x;
@@ -123,10 +194,19 @@ class Player extends Life {
   }
 
   applyFriction() {
-    this.velocity.x *= frictionMultiplier;
-    this.velocity.y *= frictionMultiplier;
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
+    this.velocity.x *= frictionMultiplier;
+    this.velocity.y *= frictionMultiplier;
+  }
+
+  applyGravity() {
+    this.position.z += this.velocity.z;
+    this.velocity.z -= gravity;
+  }
+
+  jump() {
+    this.velocity.z = jumpStrength;
   }
 
   updateHitbox() {
@@ -172,7 +252,7 @@ class Player extends Life {
 
   respondToHorizontalCollision() {
     const collisionBlock = this.isCollision();
-    if (!collisionBlock) return;
+    if (collisionBlock.length === 0) return false;
 
     if (this.velocity.x > 0) {
       this.velocity.x = 0;
@@ -193,7 +273,7 @@ class Player extends Life {
 
   respondToVerticalCollision() {
     const collisionBlock = this.isCollision();
-    if (!collisionBlock) return false;
+    if (collisionBlock.length === 0) return false;
 
     if (this.velocity.y > 0) {
       this.velocity.y = 0;

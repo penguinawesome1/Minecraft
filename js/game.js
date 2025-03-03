@@ -1,28 +1,67 @@
 const canvas = document.getElementById("canvas");
 const c = canvas.getContext("2d");
 function resizeCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
-  c.scale(dpr, dpr);
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 let zoom = 2;
+let pause = false;
+const pauseMenu = document.getElementById("pausemenu");
+const deathMenu = document.getElementById("deathmenu");
+const gamemode = getParameterByName("gamemode");
+switch (gamemode) {
+  case "creative":
+    pauseMenu.classList.add("card1");
+    deathMenu.classList.add("card1");
+    break;
+  case "survival":
+    pauseMenu.classList.add("card2");
+    deathMenu.classList.add("card2");
+    break;
+  case "pvp":
+    pauseMenu.classList.add("card3");
+    deathMenu.classList.add("card3");
+    break;
+  case "skyblock":
+    pauseMenu.classList.add("card4");
+    deathMenu.classList.add("card4");
+    break;
+}
+// localStorage.clear();
+const savedChunksString = localStorage.getItem(`${gamemode}Chunks`);
+const savedChunks = savedChunksString ? JSON.parse(savedChunksString) : null;
+
 const hotbar = document.getElementById("hotbar");
+const healthbar = document.getElementById("healthbar");
 const frictionMultiplier = 0.4;
-const playerSpeed = 5;
-const jumpStrength = 6;
+const gravity = 3;
+const playerSpeed = 1;
+const jumpStrength = 20;
 // Sprite size
 const w = 32;
 const h = 32;
 
-const scaledCanvas = {
-  scale: zoom,
-  width: canvas.width / this.scale,
-  height: canvas.height / this.scale,
-};
+function getScaledCanvas(canvas, zoom) {
+  return {
+    scale: zoom,
+    width: canvas.width / zoom,
+    height: canvas.height / zoom,
+  };
+}
+let scaledCanvas = getScaledCanvas(canvas, zoom);
+
+function togglePause() {
+  if (!deathMenu.classList.contains("hidden")) return;
+  pause = !pause;
+  pauseMenu.classList.toggle("hidden");
+}
+function toggleDeath() {
+  pause = !pause;
+  deathMenu.classList.toggle("hidden");
+}
 
 const mouseScreen = {
   position: {
@@ -61,11 +100,11 @@ const player1 = new Player({
   },
   scale: 1,
   collisionBlocks,
-  imageSrc: `./img/player/Idle.png`,
+  imageSrc: `../../img/player/Idle.png`,
   frameRate: 1,
   animations: {
     Idle: {
-      imageSrc: `./img/player/Idle.png`,
+      imageSrc: `../../img/player/Idle.png`,
       frameRate: 1,
       frameBuffer: 0,
     },
@@ -74,20 +113,41 @@ const player1 = new Player({
 
 for (let i = 0; i < player1.hotbar.length; i++) {
   itemImage = player1.hotbar[i].imageSrc;
-  hotbar.children[i].children[0].src = itemImage;
+  hotbar.children[i].children[0].src = itemImage ?? "";
 }
 
 const camera = {
   position: {
-    x: -player1.position.x + window.innerWidth / scaledCanvas.scale / 2,
-    y: -player1.position.y + window.innerHeight / scaledCanvas.scale / 2,
+    x: -player1.position.x + scaledCanvas.width / 2,
+    y: -player1.position.y + scaledCanvas.height / 2,
   },
 };
 
-const world1 = new World({ seed: 1, renderDistance: 1, generateDistance: 1 });
+const world1 = new World(
+  gamemode === "skyblock"
+    ? {
+        seed: 1,
+        renderDistance: 5,
+        generateDistance: -1,
+        chunkSize: 16,
+        chunkHeight: 10,
+        airHeight: 9,
+      }
+    : {
+        seed: 1,
+        renderDistance: 1,
+        generateDistance: 1,
+        chunkSize: 16,
+        chunkHeight: 10,
+        airHeight: 5,
+      }
+);
+
+if (gamemode === "skyblock") world1.generateChunks();
 
 function animate() {
   window.requestAnimationFrame(animate);
+  if (pause) return;
 
   c.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -95,7 +155,7 @@ function animate() {
   c.scale(scaledCanvas.scale, scaledCanvas.scale);
   c.translate(camera.position.x, camera.position.y);
 
-  world1.generateChunks();
+  if (gamemode !== "skyblock") world1.generateChunks();
   world1.renderChunks();
   world1.updateHoverBlock();
 
@@ -119,6 +179,12 @@ document.addEventListener("keydown", (e) => {
       break;
     case "W":
       player1.keys.up = true;
+      break;
+    case " ":
+      player1.jump();
+      break;
+    case "ESCAPE":
+      togglePause();
       break;
   }
 });
@@ -163,7 +229,7 @@ canvas.addEventListener("mousedown", (e) => {
       break;
     case 2:
       const block = player1.hotbar[player1.selectedItem];
-      world1.addBlock(block);
+      if (block.name) world1.addBlock(block);
       break;
   }
 });
@@ -187,21 +253,17 @@ window.addEventListener("wheel", (e) => {
     return;
   }
 
-  const originalCenterX =
-    camera.position.x + window.innerWidth / scaledCanvas.scale / 2;
-  const originalCenterY =
-    camera.position.y + window.innerHeight / scaledCanvas.scale / 2;
+  const originalCenterX = camera.position.x + scaledCanvas.width / 2;
+  const originalCenterY = camera.position.y + scaledCanvas.height / 2;
 
   zoom -= delta * 0.1;
 
   // clamp zoom
   // zoom = Math.max(1.2, Math.min(2.8, zoom));
-  scaledCanvas.scale = zoom;
+  scaledCanvas = getScaledCanvas(canvas, zoom);
 
-  const newCenterX =
-    camera.position.x + window.innerWidth / scaledCanvas.scale / 2;
-  const newCenterY =
-    camera.position.y + window.innerHeight / scaledCanvas.scale / 2;
+  const newCenterX = camera.position.x + scaledCanvas.width / 2;
+  const newCenterY = camera.position.y + scaledCanvas.height / 2;
 
   const offsetX = originalCenterX - newCenterX;
   const offsetY = originalCenterY - newCenterY;

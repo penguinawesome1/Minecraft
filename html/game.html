@@ -1,0 +1,71 @@
+<!DOCTYpE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft</title>
+    <link rel="icon" type="image/png" href="../img/logo.png">
+    <script src="../js/classes/CollisionBlock.js" defer></script>
+    <script src="../js/classes/Sprite.js" defer></script>
+    <script src="../js/classes/Life.js" defer></script>
+    <script src="../js/classes/player.js" defer></script>
+    <script src="../js/classes/World.js" defer></script>
+    <script src="../js/classes/Perlin.js" defer></script>
+    <script src="../js/utils.js" defer></script>
+    <script src="../js/game.js" defer></script>
+
+    <link href="../css/card.css" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        #selected {
+            outline: 2px solid black;
+        }
+        .hurt {
+            color: black !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div id="deathmenu" class="hidden card" style="transform-origin: center;">
+            <h1 class="title">You died!</h1>
+            <button class="button" onclick="player1.respawn();">Respawn</button>
+            <button class="button button2"><a href="../index.html">Menu</a></button>
+        </div>
+    </div>
+    <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div id="pausemenu" class="hidden card" style="transform-origin: center;">
+            <h1 class="title">Paused</h1>
+            <button class="button" onclick="togglePause();">Resume</button>
+            <button class="button button2"><a href="../index.html">Menu</a></button>
+        </div>
+    </div>
+    <div id="healthbar" class="select-none absolute bottom-[90px] left-1/2 -translate-x-full ml-auto p-3 flex">
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+        <div class="text-[2.8rem] text-red-600">&#9829</div>
+    </div>
+    <div id="hotbar" class="absolute bottom-5 left-1/2 -translate-x-1/2 ml-auto p-3 flex gap-3 bg-gray-300 rounded-lg border-4 border-b-[8px] border-white border-b-gray-500 outline outline-4 outline-gray-600">
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]" id="selected"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+        <div class="w-14 aspect-square bg-gray-400 rounded-lg shadow-[inset_0_4px_12px_-5px_black]"><img src="" class="p-1 w-full object-contain" draggable="false"></div>
+    </div>
+    <canvas id="canvas" class="w-full h-svh bg-black"></canvas>
+</body>
+</html>
