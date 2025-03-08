@@ -11,7 +11,6 @@ class Sprite {
     this.position = position;
     this.scale = scale;
     this.frameRate = frameRate;
-    this.image = new Image();
     if (!imageSrc) {
       this.width = w;
       this.height = h;
@@ -27,6 +26,7 @@ class Sprite {
       height: 0,
       depth: 0,
     };
+    this.image = new Image();
     this.image.onload = () => {
       this.width = (this.image.width / this.frameRate) * this.scale;
       this.height = this.image.height * this.scale;

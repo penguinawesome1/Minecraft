@@ -8,12 +8,11 @@ class World {
   }) {
     Math.random = this.seededRandom(seed);
     this.chunkMap = savedChunks ?? {};
-    this.persistantChunks = { ...this.chunkMap };
+    this.persistantChunks = savedChunks ?? {};
     this.renderDistance = renderDistance;
     this.chunkSize = chunkSize;
     this.chunkHeight = chunkHeight;
     this.airHeight = airHeight;
-    this.hoverBlock = null;
     this.hoverBlockDepth = 6;
   }
 
@@ -35,22 +34,21 @@ class World {
    * Updates all blocks within chunks in the render distance
    * Places any blocks in queue
    * Changes hoverBlock to what's hovered over
+   * Tries to save chunk if needed
    * @param {int} renderDistance How many chunks out displayed and generated
    */
   update(renderDistance = this.renderDistance) {
     const { x: playerChunkX, y: playerChunkY } = player1.chunkPosition;
     let newHoverBlock = null;
 
-    this.loopBackToFront(renderDistance, (cx, cy) => {
+    this.loopBackToFront(renderDistance, async (cx, cy) => {
       const key = `${playerChunkX + cx},${playerChunkY + cy}`;
       const chunk = this.chunkMap[key];
       if (!chunk) {
         // generate any chunks that are missing
-        const chunk = this.generateOneChunk(
-          playerChunkX + cx,
-          playerChunkY + cy
-        );
-        this.chunkMap[key] = chunk;
+        if (player1.gamemode !== "skyblock") {
+          await this.generateOneChunk(playerChunkX + cx, playerChunkY + cy);
+        }
         return;
       }
 
@@ -66,6 +64,7 @@ class World {
       }
     });
 
+    this.tryToSaveChunk(playerChunkX, playerChunkY);
     this.clearOldHover();
     this.setNewHover(newHoverBlock);
   }
@@ -94,7 +93,6 @@ class World {
       block.name = this.addBlockType.name;
       block.image.src = this.addBlockType.imageSrc;
       this.addBlockType = null;
-      this.saveChunk = true;
     }
   }
 
@@ -115,36 +113,14 @@ class World {
   }
 
   tryToSaveChunk(chunkX, chunkY) {
-    if (!this.saveChunk) return;
-
-    const key = `${chunkX},${chunkY}`;
-    this.persistantChunks[key] = this.chunkMap[key];
-    localStorage.setItem(
-      `${gamemode}Chunks`,
-      JSON.stringify(this.persistantChunks)
-    );
-    this.saveChunk = false;
+    if (this.saveChunk) {
+      const key = `${chunkX},${chunkY}`;
+      this.persistantChunks[key] = this.chunkMap[key];
+      this.saveChunk = false;
+    }
   }
 
-  // async generateChunks(generateDistance = this.generateDistance) {
-  //   return;
-  //   const chunkGenerationPromises = [];
-  //   const { x: playerChunkX, y: playerChunkY } = player1.chunkPosition;
-
-  //   this.loopBackToFront(generateDistance, (cx, cy) => {
-  //     const chunkX = playerChunkX + cx;
-  //     const chunkY = playerChunkY + cy;
-  //     const key = `${chunkX},${chunkY}`;
-
-  //     if (this.chunkMap[key]) return;
-
-  //     chunkGenerationPromises.push(this.generateOneChunk(chunkX, chunkY));
-  //   });
-
-  //   await Promise.all(chunkGenerationPromises);
-  // }
-
-  generateOneChunk(
+  async generateOneChunk(
     chunkX,
     chunkY,
     chunkSize = this.chunkSize,
@@ -179,7 +155,7 @@ class World {
         }
       }
     }
-    return chunk;
+    this.chunkMap[`${chunkX},${chunkY}`] = chunk;
   }
 
   chooseBlock({ z, noiseVal, position, dirtChance, heightDifference }) {
@@ -216,6 +192,7 @@ class World {
   addBlock(block = { name: "", imageSrc: `../../img/tiles/missing.png` }) {
     if (!this.hoverBlock) return;
     this.addBlockType = block;
+    this.saveChunk = true;
   }
 
   loopBackToFront(distance, callback) {

@@ -49,7 +49,7 @@ class Life extends Sprite {
     this.velocity.x *= frictionMultiplier;
   }
 
-  isCollision(chunkSize = world1.chunkSize) {
+  isCollision() {
     const { x: playerChunkX, y: playerChunkY } = player1.chunkPosition;
     const adjacentChunks = [
       { cx: 0, cy: 0 },

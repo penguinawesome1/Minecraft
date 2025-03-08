@@ -16,9 +16,17 @@ const pauseMenu = document.getElementById("pausemenu");
 const deathMenu = document.getElementById("deathmenu");
 pauseMenu.classList.add(gamemode);
 deathMenu.classList.add(gamemode);
-// localStorage.clear();
+
+localStorage.clear();
 const savedChunksString = localStorage.getItem(`${gamemode}Chunks`);
 const savedChunks = savedChunksString ? JSON.parse(savedChunksString) : null;
+
+function saveGame() {
+  localStorage.setItem(
+    `${gamemode}Chunks`,
+    JSON.stringify(world1.persistantChunks)
+  );
+}
 
 const hotbar = document.getElementById("hotbar");
 const healthbar = document.getElementById("healthbar");
@@ -124,14 +132,14 @@ const world1 = new World(
   gamemode === "skyblock"
     ? {
         seed: 1,
-        renderDistance: 2,
+        renderDistance: 1,
         chunkSize: 16,
         chunkHeight: 10,
         airHeight: 9,
       }
     : {
         seed: 1,
-        renderDistance: 2,
+        renderDistance: 1,
         chunkSize: 16,
         chunkHeight: 10,
         airHeight: 5,

@@ -96,6 +96,7 @@ class Player extends Life {
     this.selectedItem = 0;
     this.maxHealth = 9;
     this.selectedHeart = this.maxHealth;
+    if (gamemode === "creative") healthbar.classList.add("hidden");
   }
 
   update() {
@@ -147,7 +148,7 @@ class Player extends Life {
 
     this.checkForKeys();
 
-    // this.applyGravity();
+    this.applyGravity();
     this.respondToDepthCollision();
     this.updateHitbox();
 
