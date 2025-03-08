@@ -85,7 +85,7 @@
 		fade-in 2s ease-in-out,
 		animate-color-1 4s infinite linear alternate,
 		4s animate-color-2 1s infinite linear alternate;
-	&.card1 {
+	&.creative {
 		background: radial-gradient(
 			300px circle at 55% 60% in oklab,
 			var(--shine-2),
@@ -97,7 +97,7 @@
 			var(--card-bg) 100%
 		);
 	}
-	&.card2 {
+	&.survival {
 		animation-delay: 300ms;
 		background: radial-gradient(
 			300px circle at 55% 60% in oklab,
@@ -110,7 +110,7 @@
 			var(--card-bg-2) 100%
 		);
 	}
-	&.card3 {
+	&.pvp {
 		animation-delay: 600ms;
 		background: radial-gradient(
 			300px circle at 55% 60% in oklab,
@@ -123,7 +123,7 @@
 			var(--card-bg-3) 100%
 		);
 	}
-	&.card4 {
+	&.skyblock {
 		animation-delay: 900ms;
 		background: radial-gradient(
 			300px circle at 55% 60% in oklab,
@@ -169,6 +169,9 @@
 }
 
 .button {
+	display: grid;
+	place-items: center;
+	outline: none !important;
 	width: 40%;
 	height: 2.2rem;
 	background-color: white;

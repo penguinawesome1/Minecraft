@@ -11,16 +11,19 @@ class Player extends Life {
 
     this.spawn = { ...position };
 
+    this.chunkPosition = { x: 0, y: 0 };
+
+    this.hitbox = {
+      position: this.position,
+      width: 1,
+      height: 1,
+      depth: 1,
+    };
+
     this.velocity = {
       x: 0,
       y: 0,
       z: 0,
-    };
-
-    this.attackBox = {
-      position: this.position,
-      width: 0,
-      height: 0,
     };
 
     this.cameraBox = {
@@ -41,7 +44,7 @@ class Player extends Life {
     };
 
     this.hotbar =
-      gamemode === "creative"
+      gamemode === "creative" || true //////////////////////////////
         ? [
             {
               name: "cobblestone",
@@ -102,20 +105,50 @@ class Player extends Life {
     this.updateCameraBox();
     this.panCamera();
 
-    // c.fillStyle = "rgba(0, 0, 0, 0.2)";
-    // c.fillRect(
-    //   this.cameraBox.position.x,
-    //   this.cameraBox.position.y,
-    //   this.cameraBox.width,
-    //   this.cameraBox.height
-    // );
+    if (dev) {
+      // draw camera box
+      c.fillStyle = "rgba(0, 0, 0, 0.2)";
+      c.fillRect(
+        this.cameraBox.position.x,
+        this.cameraBox.position.y,
+        this.cameraBox.width,
+        this.cameraBox.height
+      );
+
+      // // draw player image
+      // c.fillStyle = "rgba(0, 255, 0, 0.2)";
+      // c.fillRect(
+      //   this.position.x,
+      //   this.position.y - this.position.z,
+      //   this.width,
+      //   this.height - this.depth
+      // );
+
+      // draw player hitbox
+      c.fillStyle = "rgba(255, 0, 0, 0.2)";
+      c.fillRect(
+        this.hitbox.position.x,
+        this.hitbox.position.y - this.hitbox.position.z,
+        this.hitbox.width,
+        this.hitbox.height - this.hitbox.depth
+      );
+
+      // draw player xy hitbox
+      c.fillStyle = "rgba(0, 0, 255, 0.2)";
+      c.fillRect(
+        this.hitbox.position.x,
+        this.hitbox.position.y,
+        this.hitbox.width,
+        this.hitbox.height
+      );
+    }
 
     this.draw();
 
     this.checkForKeys();
 
     // this.applyGravity();
-    // this.respondToVerticalCollision();
+    this.respondToDepthCollision();
     this.updateHitbox();
 
     this.applyFriction();
@@ -130,7 +163,10 @@ class Player extends Life {
       healthbar.children[this.selectedHeart].classList.add("hurt");
       this.selectedHeart--;
     }
-    if (this.selectedHeart < 0) toggleDeath();
+    if (this.selectedHeart < 0) {
+      if (instantRespawn || dev) toggleDeath();
+      this.respawn();
+    }
   }
 
   respawn() {
@@ -161,35 +197,30 @@ class Player extends Life {
   }
 
   panCamera() {
-    const negCameraX = -camera.position.x;
-    const negCameraY = -camera.position.y;
-    const scaledWidth = scaledCanvas.width;
-    const scaledHeight = scaledCanvas.height;
+    const cameraX = -camera.position.x;
+    const cameraY = -camera.position.y;
+    const canvasWidth = scaledCanvas.width;
+    const canvasHeight = scaledCanvas.height;
+    const boxX = this.cameraBox.position.x;
+    const boxY = this.cameraBox.position.y;
+    const boxWidth = this.cameraBox.width;
+    const boxHeight = this.cameraBox.height;
 
-    if (this.cameraBox.position.x < negCameraX) {
-      camera.position.x = -this.cameraBox.position.x;
-    } else if (
-      this.cameraBox.position.x >
-      negCameraX + scaledWidth - this.cameraBox.width
-    ) {
-      camera.position.x = -(
-        this.cameraBox.position.x -
-        scaledWidth +
-        this.cameraBox.width
-      );
+    const leftBoundary = cameraX;
+    const rightBoundary = cameraX + canvasWidth - boxWidth;
+    const topBoundary = cameraY;
+    const bottomBoundary = cameraY + canvasHeight - boxHeight;
+
+    if (boxX < leftBoundary) {
+      camera.position.x = -boxX;
+    } else if (boxX > rightBoundary) {
+      camera.position.x = -boxX + canvasWidth - boxWidth;
     }
 
-    if (this.cameraBox.position.y < negCameraY) {
-      camera.position.y = -this.cameraBox.position.y;
-    } else if (
-      this.cameraBox.position.y >
-      negCameraY + scaledHeight - this.cameraBox.height
-    ) {
-      camera.position.y = -(
-        this.cameraBox.position.y -
-        scaledHeight +
-        this.cameraBox.height
-      );
+    if (boxY < topBoundary) {
+      camera.position.y = -boxY;
+    } else if (boxY > bottomBoundary) {
+      camera.position.y = -boxY + canvasHeight - boxHeight;
     }
   }
 
@@ -209,25 +240,18 @@ class Player extends Life {
     this.velocity.z = jumpStrength;
   }
 
-  updateHitbox() {
-    this.hitbox = {
-      position: {
-        x: this.position.x + this.width / 2,
-        y: this.position.y + this.height / 2,
-      },
-      width: 1 * this.scale,
-      height: 1 * this.scale,
+  updateHitbox(chunkSize = world1.chunkSize) {
+    const playerGrid = toGridCoordinate(this.position);
+    this.chunkPosition = {
+      x: Math.floor(playerGrid.x / chunkSize),
+      y: Math.floor(playerGrid.y / chunkSize),
     };
 
-    this.attackBox = {
-      position: {
-        x:
-          this.position.x +
-          this.scale * (28 + 52 * (this.attackDirection === "right" ? 1 : 0)),
-        y: this.position.y + 23 * this.scale,
-      },
-      width: 53 * this.scale,
-      height: 20 * this.scale,
+    this.hitbox = {
+      position: playerGrid,
+      width: 1,
+      height: 1,
+      depth: 1,
     };
   }
 
@@ -241,18 +265,20 @@ class Player extends Life {
     if (this.keys.up) k.y--;
     if (this.keys.down) k.y++;
 
-    if (k.x !== 0 && k.y !== 0) {
+    if (k.x && k.y) {
       k.x *= 0.7;
       k.y *= 0.7;
     }
+
+    k.y *= 0.5;
 
     this.velocity.x += k.x * playerSpeed;
     this.velocity.y += k.y * playerSpeed;
   }
 
-  respondToHorizontalCollision() {
+  respondToFlatCollision() {
     const collisionBlock = this.isCollision();
-    if (collisionBlock.length === 0) return false;
+    if (!collisionBlock) return false;
 
     if (this.velocity.x > 0) {
       this.velocity.x = 0;
@@ -271,28 +297,33 @@ class Player extends Life {
     }
   }
 
-  respondToVerticalCollision() {
-    const collisionBlock = this.isCollision();
-    if (collisionBlock.length === 0) return false;
+  respondToDepthCollision() {
+    const collisionBlocks = this.isCollision();
+    if (collisionBlocks.length === 0) return;
+    // this.velocity.z = 0;
 
-    if (this.velocity.y > 0) {
-      this.velocity.y = 0;
-      this.jumps = maxJumps;
-      this.dashes = maxDashes;
-      this.smashing = false;
+    if (this.velocity.z < 0) {
+      this.velocity.z = 0;
 
-      const offset =
-        this.hitbox.position.y - this.position.y + this.hitbox.height;
+      let maxZBlock = collisionBlocks[0];
+      for (let i = 1; i < collisionBlocks.length; i++) {
+        if (collisionBlocks[i].z > maxZBlock.z) {
+          maxZBlock = collisionBlocks[i];
+        }
+      }
 
-      this.position.y = collisionBlock.position.y - offset - 0.01;
-    } else if (this.velocity.y < 0) {
-      this.velocity.y = 0;
+      // const offset =
+      //   this.hitbox.position.z - this.position.z + this.hitbox.depth;
 
-      const offset = this.hitbox.position.y - this.position.y;
-
-      this.position.y =
-        collisionBlock.position.y + collisionBlock.height - offset + 0.01;
+      this.position.z = maxZBlock.position.z + this.hitbox.depth + 0.01;
     }
-    return true;
+    // else if (this.velocity.z > 0) {
+    //   this.velocity.z = 0;
+
+    //   const offset = this.hitbox.position.z - this.position.z;
+
+    //   this.position.z =
+    //     collisionBlock.position.z + collisionBlock.depth - offset + 0.01;
+    // }
   }
 }

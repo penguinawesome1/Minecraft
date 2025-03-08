@@ -7,29 +7,15 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
+let dev = false;
 let zoom = 2;
 let pause = false;
+const instantRespawn = false;
+const gamemode = getParameterByName("gamemode");
 const pauseMenu = document.getElementById("pausemenu");
 const deathMenu = document.getElementById("deathmenu");
-const gamemode = getParameterByName("gamemode");
-switch (gamemode) {
-  case "creative":
-    pauseMenu.classList.add("card1");
-    deathMenu.classList.add("card1");
-    break;
-  case "survival":
-    pauseMenu.classList.add("card2");
-    deathMenu.classList.add("card2");
-    break;
-  case "pvp":
-    pauseMenu.classList.add("card3");
-    deathMenu.classList.add("card3");
-    break;
-  case "skyblock":
-    pauseMenu.classList.add("card4");
-    deathMenu.classList.add("card4");
-    break;
-}
+pauseMenu.classList.add(gamemode);
+deathMenu.classList.add(gamemode);
 // localStorage.clear();
 const savedChunksString = localStorage.getItem(`${gamemode}Chunks`);
 const savedChunks = savedChunksString ? JSON.parse(savedChunksString) : null;
@@ -37,9 +23,9 @@ const savedChunks = savedChunksString ? JSON.parse(savedChunksString) : null;
 const hotbar = document.getElementById("hotbar");
 const healthbar = document.getElementById("healthbar");
 const frictionMultiplier = 0.4;
-const gravity = 3;
-const playerSpeed = 1;
-const jumpStrength = 20;
+const gravity = 0.3;
+const playerSpeed = 3;
+const jumpStrength = 8;
 // Sprite size
 const w = 32;
 const h = 32;
@@ -63,12 +49,23 @@ function toggleDeath() {
   deathMenu.classList.toggle("hidden");
 }
 
-const mouseScreen = {
-  position: {
+const mouse = {
+  screenPosition: {
+    x: 0,
+    y: 0,
+  },
+  worldPosition: {
     x: 0,
     y: 0,
   },
 };
+
+function updateMouse(x = mouse.screenPosition.x, y = mouse.screenPosition.y) {
+  mouse.screenPosition.x = x;
+  mouse.screenPosition.y = y;
+  mouse.worldPosition.x = x / scaledCanvas.scale - camera.position.x;
+  mouse.worldPosition.y = y / scaledCanvas.scale - camera.position.y;
+}
 
 const collisions = []; //////////////////////////
 const collisions2D = [];
@@ -96,7 +93,7 @@ const player1 = new Player({
   position: {
     x: 0,
     y: 0,
-    z: 0,
+    z: 20,
   },
   scale: 1,
   collisionBlocks,
@@ -127,16 +124,14 @@ const world1 = new World(
   gamemode === "skyblock"
     ? {
         seed: 1,
-        renderDistance: 5,
-        generateDistance: -1,
+        renderDistance: 2,
         chunkSize: 16,
         chunkHeight: 10,
         airHeight: 9,
       }
     : {
         seed: 1,
-        renderDistance: 1,
-        generateDistance: 1,
+        renderDistance: 2,
         chunkSize: 16,
         chunkHeight: 10,
         airHeight: 5,
@@ -147,6 +142,7 @@ if (gamemode === "skyblock") world1.generateChunks();
 
 function animate() {
   window.requestAnimationFrame(animate);
+  updateMouse();
   if (pause) return;
 
   c.clearRect(0, 0, canvas.width, canvas.height);
@@ -155,10 +151,7 @@ function animate() {
   c.scale(scaledCanvas.scale, scaledCanvas.scale);
   c.translate(camera.position.x, camera.position.y);
 
-  if (gamemode !== "skyblock") world1.generateChunks();
-  world1.renderChunks();
-  world1.updateHoverBlock();
-
+  world1.update();
   player1.update();
 
   c.restore();
@@ -186,6 +179,9 @@ document.addEventListener("keydown", (e) => {
     case "ESCAPE":
       togglePause();
       break;
+    case "1":
+      dev = !dev;
+      break;
   }
 });
 
@@ -207,8 +203,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-  mouseScreen.position.x = e.clientX;
-  mouseScreen.position.y = e.clientY;
+  updateMouse(e.clientX, e.clientY);
 });
 
 canvas.addEventListener("mousedown", (e) => {

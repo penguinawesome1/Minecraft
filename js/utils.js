@@ -3,43 +3,36 @@ function getParameterByName(name, url = window.location.href) {
   name = name.replace(/[\[\]]/g, "\\$&");
   var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
   var results = regex.exec(url);
-  if (!results) return null; // Handle the case where the parameter is not found at all
-
-  //Check if there is a value after the =
+  if (!results) return null;
   if (!results[2]) return ""; //if the param exists but has no value, return empty string
-
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-function collisionCircle({ object1, circle2 }) {
-  const ellipse1 = {
+function collisionCursor(block) {
+  const { x: mouseX, y: mouseY } = mouse.worldPosition;
+
+  const ellipse = {
     center: {
-      x: object1.position.x + object1.width / 2,
-      y:
-        object1.position.y + object1.height / 2 - (object1.position.z ?? 0) + 2,
+      x: block.position.x + block.width / 2,
+      y: block.position.y + block.height * 0.625 - (block.position.z ?? 0) / 2,
     },
-    radiusX: object1.width / 2 + 2,
-    radiusY: object1.height / 2,
+    radiusX: block.width / 2 + 2,
+    radiusY: block.height * 0.375,
   };
 
-  const dx = Math.abs(circle2.center.x - ellipse1.center.x) / ellipse1.radiusX;
-  const dy = Math.abs(circle2.center.y - ellipse1.center.y) / ellipse1.radiusY;
-
-  // Manhattan distance (diamond).
-  const manhattanDistance = dx + dy;
-  // Euclidean distance (circle).
-  const euclideanDistance = Math.sqrt(dx * dx + dy * dy);
+  const dx = Math.abs(mouseX - ellipse.center.x) / ellipse.radiusX;
+  const dy = Math.abs(mouseY - ellipse.center.y) / ellipse.radiusY;
+  const diamond = dx + dy;
+  const circle = Math.sqrt(dx * dx + dy * dy);
 
   const lerpFactor = 0.5;
-  const blendedDistance =
-    lerpFactor * euclideanDistance + (1 - lerpFactor) * manhattanDistance;
-
+  const blendedDistance = lerpFactor * circle + (1 - lerpFactor) * diamond;
   return blendedDistance <= 1;
 }
 
-function collision2D({ object1, object2 }) {
-  const y1 = object1.position.y - (object1.position.z ?? 0);
-  const y2 = object2.position.y - (object2.position.z ?? 0);
+function collisionScreen({ object1, object2 }) {
+  const y1 = object1.position.y - (object1.position.z ?? 0) / 2;
+  const y2 = object2.position.y - (object2.position.z ?? 0) / 2;
   return (
     y1 + object1.height >= y2 &&
     y1 <= y2 + object2.height &&
@@ -48,13 +41,72 @@ function collision2D({ object1, object2 }) {
   );
 }
 
-function collision3D({ object1, object2 }) {
+function collisionGrid({ object1, object2 }) {
+  const x1 = object1.position.x;
+  const y1 = object1.position.y;
+  const z1 = object1.position.z;
+  const w1 = object1.width;
+  const h1 = object1.height;
+  const d1 = object1.depth;
+
+  const x2 = object2.position.x;
+  const y2 = object2.position.y;
+  const z2 = object2.position.z;
+  const w2 = object2.width;
+  const h2 = object2.height;
+  const d2 = object2.depth;
+
+  return (
+    z1 + d1 >= z2 &&
+    z1 <= z2 + d2 &&
+    y1 + h1 >= y2 &&
+    y1 <= y2 + h2 &&
+    x1 + w1 >= x2 &&
+    x1 <= x2 + w2
+  );
+}
+
+function collisionGridDepth({ object1, object2 }) {
+  // console.log(object1, object2);
+  return (
+    object1.position.z + object1.depth >= object2.position.z &&
+    object1.position.z <= object2.position.z + object2.depth
+  );
+  // if (
+  //   object1.position.z + object1.depth < object2.position.z ||
+  //   object1.position.z > object2.position.z + object2.depth
+  // ) {
+  //   return false;
+  // }
+
   // return (
-  //   object1.position.y + object1.height >= object2.position.y &&
-  //   object1.position.y <= object2.position.y + object2.height &&
-  //   object1.position.x <= object2.position.x + object2.width &&
-  //   object1.position.x + object1.width >= object2.position.x
+  //   isPointInDiamond(object.position.x, object.position.y, diamond) ||
+  //   isPointInDiamond(
+  //     object.position.x + object.width,
+  //     object.position.y,
+  //     diamond
+  //   ) ||
+  //   isPointInDiamond(
+  //     object.position.x,
+  //     object.position.y + object.height,
+  //     diamond
+  //   ) ||
+  //   isPointInDiamond(
+  //     object.position.x + object.width,
+  //     object.position.y + object.height,
+  //     diamond
+  //   )
   // );
+}
+
+function isPointInDiamond(pointX, pointY, diamond) {
+  const diamondCenterX = diamond.position.x + diamond.width / 2;
+  const diamondCenterY = diamond.position.y + diamond.height / 2;
+
+  const deltaX = Math.abs(pointX - diamondCenterX);
+  const deltaY = Math.abs(pointY - diamondCenterY);
+
+  return deltaX / diamond.width / 2 + deltaY / diamond.height / 2 <= 1;
 }
 
 function calcAngle({ object1, object2 }) {
@@ -85,16 +137,17 @@ const axis = {
   },
 };
 
-function to_screen_coordinate(tile) {
+function toScreenCoordinate(tile) {
   return {
     x: tile.x * axis.x.x * (0.5 * w) + tile.y * axis.y.x * (0.5 * w),
     y: tile.x * axis.x.y * (0.5 * h) + tile.y * axis.y.y * (0.5 * h),
+    z: tile.z * (0.5 * h),
   };
 }
 
 // Going from screen coordinate to grid coordinate
 
-function invert_matrix(a, b, c, d) {
+function invertMatrix(a, b, c, d) {
   // Determinant
   const det = 1 / (a * d - b * c);
 
@@ -106,16 +159,17 @@ function invert_matrix(a, b, c, d) {
   };
 }
 
-function to_grid_coordinate(screen) {
+function toGridCoordinate(screen) {
   const a = axis.x.x * (0.5 * w);
   const b = axis.y.x * (0.5 * w);
   const c = axis.x.y * (0.5 * h);
   const d = axis.y.y * (0.5 * h);
 
-  const inv = invert_matrix(a, b, c, d);
+  const inv = invertMatrix(a, b, c, d);
 
   return {
     x: Math.floor(screen.x * inv.a + screen.y * inv.b - 0.5),
     y: Math.floor(screen.x * inv.c + screen.y * inv.d + 0.3),
+    z: Math.floor(screen.z / (h / 2)),
   };
 }

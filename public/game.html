@@ -10,7 +10,7 @@
     <script src="../js/classes/Life.js" defer></script>
     <script src="../js/classes/player.js" defer></script>
     <script src="../js/classes/World.js" defer></script>
-    <script src="../js/classes/Perlin.js" defer></script>
+    <script src="../js/perlin.js" defer></script>
     <script src="../js/utils.js" defer></script>
     <script src="../js/game.js" defer></script>
 
@@ -33,14 +33,14 @@
         <div id="deathmenu" class="hidden card" style="transform-origin: center;">
             <h1 class="title">You died!</h1>
             <button class="button" onclick="player1.respawn();">Respawn</button>
-            <button class="button button2"><a href="../index.html">Menu</a></button>
+            <a class="button button2" href="../index.html">Menu</a>
         </div>
     </div>
     <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <div id="pausemenu" class="hidden card" style="transform-origin: center;">
             <h1 class="title">Paused</h1>
             <button class="button" onclick="togglePause();">Resume</button>
-            <button class="button button2"><a href="../index.html">Menu</a></button>
+            <a class="button button2" href="../index.html">Menu</a>
         </div>
     </div>
     <div id="healthbar" class="select-none absolute bottom-[90px] left-1/2 -translate-x-full ml-auto p-3 flex">

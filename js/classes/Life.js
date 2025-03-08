@@ -18,6 +18,7 @@ class Life extends Sprite {
       position: this.position,
       width: 0,
       height: 0,
+      depth: 0,
     };
 
     for (let key in this.animations) {
@@ -39,42 +40,48 @@ class Life extends Sprite {
   }
 
   applyGravity() {
-    this.velocity.y += gravity;
     this.position.y += this.velocity.y;
+    this.velocity.y += gravity;
   }
 
   applyFriction() {
-    this.velocity.x *= frictionMultiplier;
     this.position.x += this.velocity.x;
+    this.velocity.x *= frictionMultiplier;
   }
 
   isCollision(chunkSize = world1.chunkSize) {
-    const square = to_grid_coordinate(this.position);
-    const playerChunkX = Math.floor(square.x / chunkSize);
-    const playerChunkY = Math.floor(square.y / chunkSize);
-
-    const hitBlocks = [];
+    const { x: playerChunkX, y: playerChunkY } = player1.chunkPosition;
     const adjacentChunks = [
       { cx: 0, cy: 0 },
       { cx: 1, cy: 0 },
       { cx: -1, cy: 0 },
       { cx: 0, cy: 1 },
       { cx: 0, cy: -1 },
+      { cx: 1, cy: 1 },
+      { cx: 1, cy: -1 },
+      { cx: -1, cy: 1 },
+      { cx: -1, cy: -1 },
     ];
 
+    const collisionBlocks = [];
     for (const { cx, cy } of adjacentChunks) {
       const key = `${playerChunkX + cx},${playerChunkY + cy}`;
       const chunk = world1.chunkMap[key];
       if (!chunk) continue;
 
-      for (let i = 0; i < chunk.length; i++) {
-        const block = chunk[i];
-        if (collision3D({ object1: this.hitbox, object2: block.position })) {
-          hitBlocks.push(block);
+      for (const block of chunk) {
+        if (
+          block.name !== "air" &&
+          collisionGrid({
+            object1: player1.hitbox,
+            object2: block.hitbox,
+          })
+        ) {
+          collisionBlocks.push(block);
         }
       }
     }
 
-    return hitBlocks;
+    return collisionBlocks;
   }
 }
