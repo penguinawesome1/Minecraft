@@ -2,6 +2,7 @@ class Sprite {
   constructor({
     name,
     position,
+    gridPosition,
     imageSrc,
     frameRate = 1,
     frameBuffer = 3,
@@ -9,38 +10,28 @@ class Sprite {
   }) {
     this.name = name;
     this.position = position;
+    this.gridPosition = gridPosition;
     this.scale = scale;
     this.frameRate = frameRate;
-    if (!imageSrc) {
-      this.width = w;
-      this.height = h;
-      this.depth = h / 4;
-    }
     this.hitbox = {
-      position: {
-        x: 0,
-        y: 0,
-        z: 0,
-      },
-      width: 0,
-      height: 0,
-      depth: 0,
+      position: this.position,
+      width: 1,
+      height: 1,
+      depth: 1,
     };
     this.image = new Image();
     this.image.onload = () => {
       this.width = (this.image.width / this.frameRate) * this.scale;
       this.height = this.image.height * this.scale;
-      this.depth = this.height / 4;
-      this.hitbox = {
-        position: {
-          x: this.position.x,
-          y: this.position.y + this.height / 2,
-          z: this.position.z,
-        },
-        width: this.width * 2.24,
-        height: this.width * 2.24,
-        depth: this.height / 4,
-      };
+      if (this.gridPosition) {
+        this.hitbox = {
+          position: this.gridPosition,
+          width: 1,
+          height: 1,
+          depth: 1,
+        };
+      }
+      if (this.name === "air") this.image.src = "";
     };
     this.image.src = imageSrc;
     this.currentFrame = 0;

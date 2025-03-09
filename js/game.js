@@ -32,7 +32,7 @@ const hotbar = document.getElementById("hotbar");
 const healthbar = document.getElementById("healthbar");
 const frictionMultiplier = 0.4;
 const gravity = 0.3;
-const playerSpeed = 3;
+const playerSpeed = 1;
 const jumpStrength = 8;
 // Sprite size
 const w = 32;
@@ -101,7 +101,7 @@ const player1 = new Player({
   position: {
     x: 0,
     y: 0,
-    z: 20,
+    z: 200,
   },
   scale: 1,
   collisionBlocks,
@@ -128,25 +128,15 @@ const camera = {
   },
 };
 
-const world1 = new World(
-  gamemode === "skyblock"
-    ? {
-        seed: 1,
-        renderDistance: 1,
-        chunkSize: 16,
-        chunkHeight: 10,
-        airHeight: 9,
-      }
-    : {
-        seed: 1,
-        renderDistance: 1,
-        chunkSize: 16,
-        chunkHeight: 10,
-        airHeight: 5,
-      }
-);
+const world1 = new World({
+  seed: 1,
+  renderDistance: 1,
+  chunkSize: 16,
+  chunkHeight: 3,
+  airHeight: 1,
+});
 
-if (gamemode === "skyblock") world1.generateChunks();
+if (gamemode === "skyblock") world1.generateSkyBlock();
 
 function animate() {
   window.requestAnimationFrame(animate);
@@ -160,7 +150,7 @@ function animate() {
   c.translate(camera.position.x, camera.position.y);
 
   world1.update();
-  player1.update();
+  // player1.update();
 
   c.restore();
 }

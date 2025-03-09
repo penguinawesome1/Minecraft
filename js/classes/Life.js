@@ -49,7 +49,7 @@ class Life extends Sprite {
     this.velocity.x *= frictionMultiplier;
   }
 
-  isCollision() {
+  isCollision(includesFeet = false) {
     const { x: playerChunkX, y: playerChunkY } = player1.chunkPosition;
     const adjacentChunks = [
       { cx: 0, cy: 0 },
@@ -75,8 +75,10 @@ class Life extends Sprite {
           collisionGrid({
             object1: player1.hitbox,
             object2: block.hitbox,
+            includesFeet,
           })
         ) {
+          block.image.src = `../../img/logo.png`;
           collisionBlocks.push(block);
         }
       }

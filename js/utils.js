@@ -8,13 +8,46 @@ function getParameterByName(name, url = window.location.href) {
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-function collisionCursor(block) {
+/**
+ * Determines if the block is adjacent to any visible face of the other block.
+ * @param {object} block1 - The block to check for adjacency.
+ * @param {object} block2 - The block to check against.
+ * @returns {boolean} - Returns true if the block is adjacent to any visible face of the other block, false otherwise.
+ */
+function isAdjacent({ block1, block2 }) {
+  const adjacentOffsets = [
+    { dx: 0, dy: 1, dz: 0 },
+    { dx: 1, dy: 0, dz: 0 },
+    { dx: 0, dy: 0, dz: 1 },
+  ];
+
+  return adjacentOffsets.some(
+    (offset) =>
+      block1.hitbox.position.z === block2.hitbox.position.z + offset.dz &&
+      block1.hitbox.position.x === block2.hitbox.position.x + offset.dx &&
+      block1.hitbox.position.y === block2.hitbox.position.y + offset.dy
+  );
+}
+
+function sameCordsOffsetOne({ object1, object2 }) {
+  return (
+    object1.z === object2.z &&
+    object1.x + 1 === object2.x &&
+    object1.y + 1 === object2.y
+  );
+}
+
+function collisionCursor(block, hover = false) {
   const { x: mouseX, y: mouseY } = mouse.worldPosition;
 
   const ellipse = {
     center: {
       x: block.position.x + block.width / 2,
-      y: block.position.y + block.height * 0.625 - (block.position.z ?? 0) / 2,
+      y:
+        block.position.y +
+        block.height * 0.625 -
+        (block.position.z ?? 0) / 2 +
+        (hover ? world1.hoverBlockDepth / 2 : 0),
     },
     radiusX: block.width / 2 + 2,
     radiusY: block.height * 0.375,
@@ -41,17 +74,17 @@ function collisionScreen({ object1, object2 }) {
   );
 }
 
-function collisionGrid({ object1, object2 }) {
+function collisionGrid({ object1, object2, includesFeet }) {
   const x1 = object1.position.x;
   const y1 = object1.position.y;
-  const z1 = object1.position.z;
+  const z1 = object1.position.z + object1.depth + (includesFeet ? 0 : 1); // add depth to start under the obj
   const w1 = object1.width;
   const h1 = object1.height;
   const d1 = object1.depth;
 
   const x2 = object2.position.x;
   const y2 = object2.position.y;
-  const z2 = object2.position.z;
+  const z2 = object2.position.z + object2.depth; // add depth to start under the obj
   const w2 = object2.width;
   const h2 = object2.height;
   const d2 = object2.depth;
@@ -64,49 +97,6 @@ function collisionGrid({ object1, object2 }) {
     x1 + w1 >= x2 &&
     x1 <= x2 + w2
   );
-}
-
-function collisionGridDepth({ object1, object2 }) {
-  // console.log(object1, object2);
-  return (
-    object1.position.z + object1.depth >= object2.position.z &&
-    object1.position.z <= object2.position.z + object2.depth
-  );
-  // if (
-  //   object1.position.z + object1.depth < object2.position.z ||
-  //   object1.position.z > object2.position.z + object2.depth
-  // ) {
-  //   return false;
-  // }
-
-  // return (
-  //   isPointInDiamond(object.position.x, object.position.y, diamond) ||
-  //   isPointInDiamond(
-  //     object.position.x + object.width,
-  //     object.position.y,
-  //     diamond
-  //   ) ||
-  //   isPointInDiamond(
-  //     object.position.x,
-  //     object.position.y + object.height,
-  //     diamond
-  //   ) ||
-  //   isPointInDiamond(
-  //     object.position.x + object.width,
-  //     object.position.y + object.height,
-  //     diamond
-  //   )
-  // );
-}
-
-function isPointInDiamond(pointX, pointY, diamond) {
-  const diamondCenterX = diamond.position.x + diamond.width / 2;
-  const diamondCenterY = diamond.position.y + diamond.height / 2;
-
-  const deltaX = Math.abs(pointX - diamondCenterX);
-  const deltaY = Math.abs(pointY - diamondCenterY);
-
-  return deltaX / diamond.width / 2 + deltaY / diamond.height / 2 <= 1;
 }
 
 function calcAngle({ object1, object2 }) {
@@ -168,8 +158,8 @@ function toGridCoordinate(screen) {
   const inv = invertMatrix(a, b, c, d);
 
   return {
-    x: Math.floor(screen.x * inv.a + screen.y * inv.b - 0.5),
-    y: Math.floor(screen.x * inv.c + screen.y * inv.d + 0.3),
-    z: Math.floor(screen.z / (h / 2)),
+    x: Math.floor(screen.x * inv.a + screen.y * inv.b + 0.5),
+    y: Math.floor(screen.x * inv.c + screen.y * inv.d + 0.5),
+    z: Math.floor((screen.z * 2) / h + 0.5),
   };
 }

@@ -1,12 +1,5 @@
 class Player extends Life {
-  constructor({
-    position,
-    collisionBlocks,
-    imageSrc,
-    frameRate,
-    scale = 1,
-    animations,
-  }) {
+  constructor({ position, imageSrc, frameRate, scale = 1, animations }) {
     super({ position, imageSrc, frameRate, scale, animations });
 
     this.spawn = { ...position };
@@ -116,32 +109,9 @@ class Player extends Life {
         this.cameraBox.height
       );
 
-      // // draw player image
-      // c.fillStyle = "rgba(0, 255, 0, 0.2)";
-      // c.fillRect(
-      //   this.position.x,
-      //   this.position.y - this.position.z,
-      //   this.width,
-      //   this.height - this.depth
-      // );
-
-      // draw player hitbox
+      // draw player
       c.fillStyle = "rgba(255, 0, 0, 0.2)";
-      c.fillRect(
-        this.hitbox.position.x,
-        this.hitbox.position.y - this.hitbox.position.z,
-        this.hitbox.width,
-        this.hitbox.height - this.hitbox.depth
-      );
-
-      // draw player xy hitbox
-      c.fillStyle = "rgba(0, 0, 255, 0.2)";
-      c.fillRect(
-        this.hitbox.position.x,
-        this.hitbox.position.y,
-        this.hitbox.width,
-        this.hitbox.height
-      );
+      c.fillRect(this.position.x, this.position.y, this.width, this.height);
     }
 
     this.draw();
@@ -153,7 +123,7 @@ class Player extends Life {
     this.updateHitbox();
 
     this.applyFriction();
-    // this.respondToHorizontalCollision();
+    this.respondToFlatCollision();
 
     // this.checkForHit();
     this.checkForDeath();
@@ -242,7 +212,11 @@ class Player extends Life {
   }
 
   updateHitbox(chunkSize = world1.chunkSize) {
-    const playerGrid = toGridCoordinate(this.position);
+    const playerGrid = toGridCoordinate({
+      x: this.position.x,
+      y: this.position.y + this.height / 4,
+      z: this.position.z,
+    });
     this.chunkPosition = {
       x: Math.floor(playerGrid.x / chunkSize),
       y: Math.floor(playerGrid.y / chunkSize),
@@ -278,45 +252,72 @@ class Player extends Life {
   }
 
   respondToFlatCollision() {
-    const collisionBlock = this.isCollision();
-    if (!collisionBlock) return false;
+    const collisionBlocks = this.isCollision();
+    if (collisionBlocks.length === 0) return;
 
-    if (this.velocity.x > 0) {
+    if (this.velocity.x < 0) {
       this.velocity.x = 0;
 
-      const offset =
-        this.hitbox.position.x - this.position.x + this.hitbox.width;
+      let maxBlock = collisionBlocks[0];
+      for (let i = 1; i < collisionBlocks.length; i++) {
+        if (collisionBlocks[i].hitbox.x > maxBlock.hitbox.x) {
+          maxBlock = collisionBlocks[i];
+        }
+      }
 
-      this.position.x = collisionBlock.position.x - offset - 0.01;
-    } else if (this.velocity.x < 0) {
+      this.position.x = maxBlock.position.x + maxBlock.width + 0.01;
+    } else if (this.velocity.x > 0) {
       this.velocity.x = 0;
 
-      const offset = this.hitbox.position.x - this.position.x;
+      let maxBlock = collisionBlocks[0];
+      for (let i = 1; i < collisionBlocks.length; i++) {
+        if (collisionBlocks[i].hitbox.x < maxBlock.hitbox.x) {
+          maxBlock = collisionBlocks[i];
+        }
+      }
 
-      this.position.x =
-        collisionBlock.position.x + collisionBlock.width - offset + 0.01;
+      this.position.x = maxBlock.position.x - this.width + 0.01;
+    } else if (this.velocity.y < 0) {
+      this.velocity.y = 0;
+
+      let maxBlock = collisionBlocks[0];
+      for (let i = 1; i < collisionBlocks.length; i++) {
+        if (collisionBlocks[i].hitbox.y > maxBlock.hitbox.y) {
+          maxBlock = collisionBlocks[i];
+        }
+      }
+
+      this.position.y = maxBlock.position.y + maxBlock.height - 0.01;
+    } else if (this.velocity.y > 0) {
+      this.velocity.y = 0;
+
+      let maxBlock = collisionBlocks[0];
+      for (let i = 1; i < collisionBlocks.length; i++) {
+        if (collisionBlocks[i].hitbox.y < maxBlock.hitbox.y) {
+          maxBlock = collisionBlocks[i];
+        }
+      }
+
+      this.position.y = maxBlock.position.y - this.height - 0.01;
     }
   }
 
   respondToDepthCollision() {
-    const collisionBlocks = this.isCollision();
+    const collisionBlocks = this.isCollision(true);
     if (collisionBlocks.length === 0) return;
-    // this.velocity.z = 0;
 
     if (this.velocity.z < 0) {
       this.velocity.z = 0;
 
       let maxZBlock = collisionBlocks[0];
       for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].z > maxZBlock.z) {
+        if (collisionBlocks[i].hitbox.z > maxZBlock.hitbox.z) {
           maxZBlock = collisionBlocks[i];
         }
       }
 
-      // const offset =
-      //   this.hitbox.position.z - this.position.z + this.hitbox.depth;
-
-      this.position.z = maxZBlock.position.z + this.hitbox.depth + 0.01;
+      this.position.z =
+        maxZBlock.position.z + this.hitbox.depth * h * 0.25 + 0.01;
     }
     // else if (this.velocity.z > 0) {
     //   this.velocity.z = 0;

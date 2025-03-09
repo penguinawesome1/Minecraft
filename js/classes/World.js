@@ -40,14 +40,15 @@ class World {
   update(renderDistance = this.renderDistance) {
     const { x: playerChunkX, y: playerChunkY } = player1.chunkPosition;
     let newHoverBlock = null;
+    let playerUpdated = false;
 
-    this.loopBackToFront(renderDistance, async (cx, cy) => {
+    this.loopBackToFront(renderDistance, (cx, cy) => {
       const key = `${playerChunkX + cx},${playerChunkY + cy}`;
       const chunk = this.chunkMap[key];
       if (!chunk) {
         // generate any chunks that are missing
-        if (player1.gamemode !== "skyblock") {
-          await this.generateOneChunk(playerChunkX + cx, playerChunkY + cy);
+        if (gamemode !== "skyblock") {
+          this.generateOneChunk(playerChunkX + cx, playerChunkY + cy);
         }
         return;
       }
@@ -57,8 +58,24 @@ class World {
         this.tryToPlace(block);
         block.update();
 
+        // update player relative to other blocks
+        if (
+          !playerUpdated &&
+          sameCordsOffsetOne({
+            object1: player1.hitbox.position,
+            object2: block.hitbox.position,
+          })
+        ) {
+          player1.update();
+          playerUpdated = true;
+        }
+
         // changes hoverBlock up to last searched block in chunk
-        if (block.name !== "air" && collisionCursor(block)) {
+        const shouldAccountForHover = block === this.hoverBlock;
+        if (
+          block.name !== "air" &&
+          collisionCursor(block, shouldAccountForHover)
+        ) {
           newHoverBlock = block;
         }
       }
@@ -67,6 +84,8 @@ class World {
     this.tryToSaveChunk(playerChunkX, playerChunkY);
     this.clearOldHover();
     this.setNewHover(newHoverBlock);
+    this.addBlockType = null;
+    if (!playerUpdated) player1.update();
   }
 
   clearOldHover() {
@@ -87,29 +106,17 @@ class World {
     if (
       this.addBlockType &&
       block.name === "air" &&
-      this.isAdjacentToHover(block) &&
-      collisionCursor(block)
+      this.hoverBlock &&
+      isAdjacent({
+        block1: block,
+        block2: this.hoverBlock,
+      }) &&
+      collisionCursor(block, true)
     ) {
       block.name = this.addBlockType.name;
       block.image.src = this.addBlockType.imageSrc;
       this.addBlockType = null;
     }
-  }
-
-  isAdjacentToHover(block, hoverBlock = this.hoverBlock) {
-    return true;
-    const adjacentOffsets = [
-      { dx: 0, dy: 1, dz: 0 },
-      { dx: 1, dy: 0, dz: 0 },
-      { dx: 0, dy: 0, dz: 0 },
-    ];
-
-    return adjacentOffsets.some(
-      (offset) =>
-        block.hitbox.position.x === hoverBlock.hitbox.position.x + offset.dx &&
-        block.hitbox.position.y === hoverBlock.hitbox.position.y + offset.dy &&
-        block.hitbox.position.z === hoverBlock.hitbox.position.z + offset.dz
-    );
   }
 
   tryToSaveChunk(chunkX, chunkY) {
@@ -120,7 +127,7 @@ class World {
     }
   }
 
-  async generateOneChunk(
+  generateOneChunk(
     chunkX,
     chunkY,
     chunkSize = this.chunkSize,
@@ -139,15 +146,16 @@ class World {
         const noiseVal = octaveNoise(worldX / chunkSize, worldY / chunkSize);
 
         for (let z = 0; z < chunkHeight; z++) {
+          const gridPosition = {
+            x: worldX,
+            y: worldY,
+            z,
+          };
           chunk.push(
             this.chooseBlock({
-              z,
+              gridPosition,
               noiseVal,
-              position: toScreenCoordinate({
-                x: worldX,
-                y: worldY,
-                z,
-              }),
+              position: toScreenCoordinate(gridPosition),
               dirtChance: this.getRandomChance(20),
               heightDifference,
             })
@@ -158,29 +166,33 @@ class World {
     this.chunkMap[`${chunkX},${chunkY}`] = chunk;
   }
 
-  chooseBlock({ z, noiseVal, position, dirtChance, heightDifference }) {
-    if (z > noiseVal * heightDifference) {
-      return new Sprite({ name: "air", position, imageSrc: "" });
-    }
-    if (dirtChance) {
-      return new Sprite({
-        name: "dirt",
-        position,
-        imageSrc: `../../img/tiles/tile_021.png`,
-      });
-    }
+  chooseBlock({
+    gridPosition,
+    noiseVal,
+    position,
+    dirtChance,
+    heightDifference,
+  }) {
     const blockType =
-      noiseVal > 0.25
+      gridPosition.z === 0
+        ? { name: "bedrock", imageSrc: `../../img/tiles/tile_115.png` }
+        : gridPosition.z > noiseVal * heightDifference
+        ? { name: "air", imageSrc: `../../img/tiles/missing.png` }
+        : dirtChance
+        ? { name: "dirt", imageSrc: `../../img/tiles/tile_021.png` }
+        : noiseVal > 0.25
         ? { name: "grass", imageSrc: `../../img/tiles/tile_023.png` }
         : { name: "stone", imageSrc: `../../img/tiles/tile_063.png` };
     return new Sprite({
       name: blockType.name,
       position,
+      gridPosition,
       imageSrc: blockType.imageSrc,
     });
   }
 
   deleteBlock(type) {
+    if (this.hoverBlock && this.hoverBlock.name === "bedrock") return;
     if (type === "hover") {
       if (!this.hoverBlock) return;
       this.hoverBlock.name = "air";
@@ -201,5 +213,57 @@ class World {
         callback(cx, cy);
       }
     }
+  }
+
+  generateSkyBlock(chunkSize = this.chunkSize, chunkHeight = this.chunkHeight) {
+    const { x: playerChunkX, y: playerChunkY } = player1.chunkPosition;
+    const key = `${playerChunkX},${playerChunkY}`;
+    if (this.chunkMap[key]) return;
+
+    let chunk = [];
+    for (let y = 0; y < chunkSize; y++) {
+      const worldY = playerChunkY + y;
+      for (let x = 0; x < chunkSize; x++) {
+        const worldX = playerChunkX + x;
+        for (let z = 0; z < chunkHeight; z++) {
+          if (x < chunkSize * 0.5 && y >= chunkSize * 0.5) continue;
+          const gridPosition = {
+            x: worldX,
+            y: worldY,
+            z,
+          };
+          const position = toScreenCoordinate(gridPosition);
+          if (z < 4) {
+            chunk.push(
+              new Sprite({
+                name: "dirt",
+                gridPosition,
+                position,
+                imageSrc: `../../img/tiles/tile_021.png`,
+              })
+            );
+          } else if (z === 4) {
+            chunk.push(
+              new Sprite({
+                name: "grass",
+                gridPosition,
+                position,
+                imageSrc: `../../img/tiles/tile_023.png`,
+              })
+            );
+          } else {
+            chunk.push(
+              new Sprite({
+                name: "air",
+                gridPosition,
+                position,
+                imageSrc: `../../img/tiles/missing.png`,
+              })
+            );
+          }
+        }
+      }
+    }
+    this.chunkMap[key] = chunk;
   }
 }
