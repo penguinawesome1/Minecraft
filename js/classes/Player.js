@@ -74,7 +74,11 @@ class Player extends Life {
       { imageSrc: `../img/tiles/tile_036.png`, blockNum: Renderer.SHRUB },
       { imageSrc: `../img/tiles/tile_027.png`, blockNum: Renderer.MOSS },
       { imageSrc: `../img/tiles/tile_019.png`, blockNum: Renderer.SPROUT },
+<<<<<<< HEAD
+      { imageSrc: `../img/tiles/tile_025.png`, blockNum: Renderer.WOOD },
+=======
       { imageSrc: `../img/tiles/tile_025.png`, blockNum: Renderer.FARMLAND },
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
     ];
   }
 
@@ -110,8 +114,6 @@ class Player extends Life {
         this.height
       );
     }
-
-    this.draw();
 
     this.checkForKeys();
 

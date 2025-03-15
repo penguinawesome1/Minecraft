@@ -51,6 +51,24 @@ class Sprite {
       width: this.image.width / this.frameRate,
       height: this.image.height,
     };
+<<<<<<< HEAD
+      try {
+          this.c.drawImage(
+              this.image,
+              cropbox.position.x,
+              cropbox.position.y,
+              cropbox.width,
+              cropbox.height,
+              this.position.x,
+              this.position.y - this.position.z / 2,
+              this.width,
+              this.height
+          );
+      }
+      catch (e) {
+          console.log(this.image.src)
+      }
+=======
 
     this.c.drawImage(
       this.image,
@@ -63,6 +81,7 @@ class Sprite {
       this.width,
       this.height
     );
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
   }
 
   update() {

@@ -20,8 +20,13 @@ class World {
     this.hoverBlockDepth = 6;
     this.enemyList = [];
 
+<<<<<<< HEAD
+    this.setMaps();
+    if (this.worldMode === "skyblock") this.generateSkyBlock(10);
+=======
     if (this.worldMode === "skyblock") this.generateSkyBlock(10);
     this.setMaps();
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
   }
 
   setObjects({ renderer }) {
@@ -52,13 +57,22 @@ class World {
    * Tries to save chunk if needed
    */
   update() {
+<<<<<<< HEAD
+    const { renderDistance, hoverBlock } = this;
+    const { x: playerChunkX, y: playerChunkY } = this.player.chunkPosition;
+=======
     const { x: playerChunkX, y: playerChunkY } = this.player.chunkPosition;
     const renderDistance = this.renderDistance;
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
     const minChunkX = playerChunkX - renderDistance;
     const maxChunkX = playerChunkX + renderDistance;
     const minChunkY = playerChunkY - renderDistance;
     const maxChunkY = playerChunkY + renderDistance;
     let newHoverBlock = null;
+<<<<<<< HEAD
+    this.playerDrawn = false;
+=======
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
 
     for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -66,7 +80,11 @@ class World {
         if (!chunk) {
           // generate any chunks that are missing
           if (this.worldMode !== "skyblock") {
+<<<<<<< HEAD
+            this.generateOneChunk(chunkX, chunkY);
+=======
             this.generateOneChunk({ chunkX, chunkY });
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
           }
           continue;
         }
@@ -74,6 +92,27 @@ class World {
         for (let i = 0; i < chunk.length; i++) {
           const block = chunk[i];
 
+<<<<<<< HEAD
+          if (block === hoverBlock && this.isDeleteBlock) {
+            this.saveChunk(chunkX, chunkY);
+            this.updateVisibility(chunk);
+            this.isDeleteBlock = false;
+          }
+
+          // visually update blocks, place any if needed, load people when needed
+          if (this.tryToPlace(block)) {
+            this.saveChunk(chunkX, chunkY);
+            this.updateVisibility(chunk);
+          }
+          this.tryToUpdateLife(block);
+
+          if (block.visible) {
+            this.renderer.draw({
+              blockNum: block.blockNum,
+              position: block.position,
+            });
+          }
+=======
           // visually update blocks, place any if needed, load people when needed
           this.tryToPlace(block);
           this.tryToUpdateLife(block);
@@ -81,6 +120,7 @@ class World {
             blockNum: block.blockNum,
             position: block.position,
           });
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
 
           // changes hoverBlock up to last searched block in chunk
           const shouldAccountForHover = block === this.hoverBlock;
@@ -94,18 +134,26 @@ class World {
       }
     }
 
+<<<<<<< HEAD
+=======
     this.tryToSaveChunk({ chunkX: playerChunkX, chunkY: playerChunkY });
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
     this.clearOldHover();
     this.setNewHover(newHoverBlock);
     this.tryToAddZombie();
     this.addBlockNum = null;
 
+<<<<<<< HEAD
+    if (!this.playerDrawn) this.player.draw();
+    this.player.update();
+=======
     if (!this.player.updated) this.player.update();
     for (const enemy of this.enemyList) {
       if (!enemy.updated) {
         enemy.update();
       }
     }
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
   }
 
   tryToUpdateLife(block) {
@@ -116,7 +164,12 @@ class World {
         object2: block.grid.position,
       })
     ) {
+<<<<<<< HEAD
+      this.player.draw();
+      this.playerDrawn = true;
+=======
       this.player.update();
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
     }
 
     // update enemies relative to other blocks
@@ -147,21 +200,45 @@ class World {
   }
 
   tryToPlace(block) {
+    const { addBlockNum, hoverBlock } = this;
+
     if (
+<<<<<<< HEAD
+      addBlockNum &&
+      block.blockNum === Renderer.AIR &&
+      hoverBlock &&
+      collisionCursor(block, true) &&
+=======
       this.addBlockNum &&
       block.blockNum === Renderer.AIR &&
       this.hoverBlock &&
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
       isAdjacent({
         block1: block,
-        block2: this.hoverBlock,
-      }) &&
-      collisionCursor(block, true)
+        block2: hoverBlock,
+      })
     ) {
+<<<<<<< HEAD
+      block.blockNum = addBlockNum;
+      this.addBlockNum = null;
+      return true;
+=======
       block.blockNum = this.addBlockNum;
       this.addBlockNum = null;
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
     }
+    return false;
   }
 
+<<<<<<< HEAD
+  saveChunk(chunkX, chunkY) {
+    const key = `${chunkX},${chunkY}`;
+    this.persistantChunks[key] = this.chunkMap[key];
+  }
+
+  generateOneChunk(chunkX, chunkY) {
+    const { chunkSize, chunkHeight } = this;
+=======
   tryToSaveChunk({ chunkX, chunkY }) {
     if (this.saveChunk) {
       const key = `${chunkX},${chunkY}`;
@@ -173,6 +250,7 @@ class World {
   generateOneChunk({ chunkX, chunkY }) {
     const chunkSize = this.chunkSize;
     const chunkHeight = this.chunkHeight;
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
     const worldXOffset = chunkX * chunkSize;
     const worldYOffset = chunkY * chunkSize;
     const heightDifference = chunkHeight - this.airHeight;
@@ -189,19 +267,103 @@ class World {
               heightDifference,
             }),
             position: toScreenCoordinate(gridPosition),
+<<<<<<< HEAD
+            grid: { position: gridPosition, width: 1, height: 1, depth: 1 },
+=======
             grid: {
               position: gridPosition,
               width: 1,
               height: 1,
               depth: 1,
             },
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
           });
         }
       }
     }
+
+    this.updateVisibility(chunk);
+
     this.chunkMap[`${chunkX},${chunkY}`] = chunk;
   }
 
+<<<<<<< HEAD
+  updateVisibility(chunk) {
+    const { chunkSize, chunkHeight } = this;
+    const chunkLength = chunk.length;
+    const adjacentOffsets = [
+      [0, 0, 1],
+      [1, 0, 0],
+      [0, 1, 0],
+    ];
+
+    for (let i = 0; i < chunkLength; i++) {
+      const block = chunk[i];
+      if (block.blockNum === Renderer.AIR) continue;
+
+      const z = i % chunkHeight;
+      const temp = Math.floor(i / chunkHeight);
+      const x = temp % chunkSize;
+      const y = Math.floor(temp / chunkSize);
+
+      block.visible = false;
+
+      for (const [dx, dy, dz] of adjacentOffsets) {
+        const nx = x + dx;
+        const ny = y + dy;
+        const nz = z + dz;
+
+        if (nz >= chunkHeight || nx >= chunkSize || ny >= chunkSize) {
+          block.visible = true; // visible if a visible face next to chunk border
+          break;
+        }
+
+        const neighborBlock =
+          chunk[nz + nx * chunkHeight + ny * chunkHeight * chunkSize];
+        if (neighborBlock && neighborBlock.blockNum === Renderer.AIR) {
+          block.visible = true; // visible if a visible face has air against it
+          break;
+        }
+      }
+    }
+  }
+
+  getBlockNum({
+    z,
+    noiseVal,
+    heightDifference,
+    dirtChance = getRandomChance(5),
+    noiseGrass = 0.25,
+  }) {
+    if (z === 0) return Renderer.BEDROCK;
+    if (z > noiseVal * (heightDifference - 1) + 1) return Renderer.AIR;
+    if (dirtChance) return Renderer.DIRT;
+    if (noiseVal > noiseGrass) return Renderer.GRASS;
+    return Renderer.STONE;
+  }
+
+  getBlockNumSkyBlock({ z, heightDifference }) {
+    if (z < heightDifference - 1) return Renderer.DIRT;
+    if (z === heightDifference - 1) return Renderer.GRASS;
+    return Renderer.AIR;
+  }
+
+  deleteBlock(type) {
+    if (this.hoverBlock && this.hoverBlock.blockNum === Renderer.BEDROCK)
+      return;
+    if (type === "hover") {
+      if (!this.hoverBlock) return;
+      this.hoverBlock.blockNum = Renderer.AIR;
+      this.isDeleteBlock = true;
+    }
+  }
+
+  addBlock(blockNum = Renderer.MISSING) {
+    if (!this.hoverBlock) return;
+    this.addBlockNum = blockNum;
+  }
+
+=======
   getBlockNum({
     z,
     noiseVal,
@@ -238,6 +400,7 @@ class World {
     this.saveChunk = true;
   }
 
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
   generateSkyBlock() {
     const { x: playerChunkX, y: playerChunkY } = this.player.chunkPosition;
     const key = `${playerChunkX},${playerChunkY}`;
@@ -259,7 +422,11 @@ class World {
 
           const gridPosition = { x, y, z };
           chunk.push({
+<<<<<<< HEAD
+            blockNum: this.getBlockNumSkyBlock({ z, heightDifference }),
+=======
             blockNum: block1.getBlockNumSkyBlock({ z, heightDifference }),
+>>>>>>> 3ad5e85428332d2d0cf1f655713cc45ef695ef74
             position: toScreenCoordinate(gridPosition),
             grid: {
               position: gridPosition,
