@@ -1,11 +1,48 @@
 class Player extends Life {
-  constructor({ position, imageSrc, frameRate, scale = 1, animations }) {
-    super({ position, imageSrc, frameRate, scale, animations });
+  constructor({
+    gamemode,
+    spawnRadius,
+    imageSrc,
+    frameRate,
+    scale = 1,
+    animations,
+  }) {
+    super({
+      position: {
+        x: Math.random() * spawnRadius,
+        y: Math.random() * spawnRadius,
+        z: 200,
+      },
+      imageSrc,
+      frameRate,
+      scale,
+      animations,
+    });
 
-    this.spawn = { ...position };
-
+    this.gamemode = gamemode;
+    this.spawn = { ...this.position };
     this.chunkPosition = { x: 0, y: 0 };
+    this.lastDirection = "right";
+    this.animations = animations;
+    this.keys = {
+      left: false,
+      right: false,
+      down: false,
+      up: false,
+    };
 
+    this.setupPhysics();
+    this.setupHotbar();
+    this.setupHealth();
+  }
+
+  setObjects({ gameManager, renderer, world }) {
+    this.gameManager = gameManager;
+    this.renderer = renderer;
+    this.world = world;
+  }
+
+  setupPhysics() {
     this.hitbox = {
       position: this.position,
       width: 1,
@@ -19,77 +56,32 @@ class Player extends Life {
       z: 0,
     };
 
-    this.cameraBox = {
-      position: this.position,
-      width: 0,
-      height: 0,
-    };
+    this.canJump = false;
+  }
 
-    this.jumps = true;
-    this.lastDirection = "right";
-    this.animations = animations;
+  setupHotbar() {
+    this.hotbar = [{}, {}, {}, {}, {}, {}, {}, {}, {}];
+    if (this.gamemode === "creative") return;
+    this.hotbar = [
+      {
+        imageSrc: `../img/tiles/tile_061.png`,
+        blockNum: Renderer.COBBLESTONE,
+      },
+      { imageSrc: `../img/tiles/tile_023.png`, blockNum: Renderer.GRASS },
+      { imageSrc: `../img/tiles/tile_021.png`, blockNum: Renderer.DIRT },
+      { imageSrc: `../img/tiles/tile_114.png`, blockNum: Renderer.WATER },
+      { imageSrc: `../img/tiles/tile_003.png`, blockNum: Renderer.MUD },
+      { imageSrc: `../img/tiles/tile_036.png`, blockNum: Renderer.SHRUB },
+      { imageSrc: `../img/tiles/tile_027.png`, blockNum: Renderer.MOSS },
+      { imageSrc: `../img/tiles/tile_019.png`, blockNum: Renderer.SPROUT },
+      { imageSrc: `../img/tiles/tile_025.png`, blockNum: Renderer.FARMLAND },
+    ];
+  }
 
-    this.keys = {
-      left: false,
-      right: false,
-      down: false,
-      up: false,
-    };
-
-    this.hotbar =
-      gamemode === "creative" || true //////////////////////////////
-        ? [
-            {
-              name: "cobblestone",
-              imageSrc: `../../img/tiles/tile_061.png`,
-              quantity: 1,
-            },
-            {
-              name: "grass",
-              imageSrc: `../../img/tiles/tile_023.png`,
-              quantity: 1,
-            },
-            {
-              name: "dirt",
-              imageSrc: `../../img/tiles/tile_021.png`,
-              quantity: 1,
-            },
-            {
-              name: "water",
-              imageSrc: `../../img/tiles/tile_114.png`,
-              quantity: 1,
-            },
-            {
-              name: "mud",
-              imageSrc: `../../img/tiles/tile_003.png`,
-              quantity: 1,
-            },
-            {
-              name: "shrub",
-              imageSrc: `../../img/tiles/tile_036.png`,
-              quantity: 1,
-            },
-            {
-              name: "moss",
-              imageSrc: `../../img/tiles/tile_027.png`,
-              quantity: 1,
-            },
-            {
-              name: "sprout",
-              imageSrc: `../../img/tiles/tile_019.png`,
-              quantity: 1,
-            },
-            {
-              name: "farmland",
-              imageSrc: `../../img/tiles/tile_025.png`,
-              quantity: 1,
-            },
-          ]
-        : [{}, {}, {}, {}, {}, {}, {}, {}, {}];
-    this.selectedItem = 0;
+  setupHealth() {
     this.maxHealth = 9;
-    this.selectedHeart = this.maxHealth;
-    if (gamemode === "creative") healthbar.classList.add("hidden");
+    this.health = this.maxHealth;
+    this.invulnerable = this.gamemode === "creative";
   }
 
   update() {
@@ -97,12 +89,12 @@ class Player extends Life {
     this.updateHitbox();
 
     this.updateCameraBox();
-    this.panCamera();
+    this.renderer.panCamera(this);
 
-    if (dev) {
+    if (this.gameManager.dev) {
       // draw camera box
-      c.fillStyle = "rgba(0, 0, 0, 0.2)";
-      c.fillRect(
+      this.renderer.c.fillStyle = "rgba(0, 0, 0, 0.2)";
+      this.renderer.c.fillRect(
         this.cameraBox.position.x,
         this.cameraBox.position.y,
         this.cameraBox.width,
@@ -110,8 +102,13 @@ class Player extends Life {
       );
 
       // draw player
-      c.fillStyle = "rgba(255, 0, 0, 0.2)";
-      c.fillRect(this.position.x, this.position.y, this.width, this.height);
+      this.renderer.c.fillStyle = "rgba(255, 0, 0, 0.2)";
+      this.renderer.c.fillRect(
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
     }
 
     this.draw();
@@ -123,107 +120,83 @@ class Player extends Life {
     this.updateHitbox();
 
     this.applyFriction();
-    this.respondToFlatCollision();
+    // this.respondToFlatCollision();
 
     // this.checkForHit();
-    this.checkForDeath();
+
+    // Check for fall damage
+    if (this.position.z < Constants.VOID_DEPTH) {
+      this.takeDamage(2);
+    }
+
+    if (this.health <= 0) {
+      this.gameManager.toggleDeath();
+      this.gameManager.respawnPlayer(this);
+    }
   }
 
-  checkForDeath() {
-    if (this.position.z < -50) {
-      healthbar.children[this.selectedHeart].classList.add("hurt");
-      this.selectedHeart--;
-    }
-    if (this.selectedHeart < 0) {
-      if (instantRespawn || dev) toggleDeath();
-      this.respawn();
-    }
+  takeDamage(amount) {
+    if (this.invulnerable || this.gameManager.dev) return;
+
+    this.health = Math.max(0, this.health - amount);
+    this.gameManager.updateHealthbar();
+
+    this.invulnerable = true;
+    setTimeout(() => {
+      this.invulnerable = false;
+    }, Constants.INVULNERABLE_DURATION);
   }
 
-  respawn() {
-    this.position = { ...this.spawn };
-    this.velocity = {
-      x: 0,
-      y: 0,
-      z: 0,
-    };
-    for (const heart of healthbar.children) {
-      heart.classList.remove("hurt");
-    }
-    this.selectedHeart = this.maxHealth;
-    toggleDeath();
+  heal(amount) {
+    this.health = Math.min(this.maxHealth, this.health + amount);
+    this.gameManager.updateHealthbar();
   }
 
   updateCameraBox() {
-    const w = 1000 / scaledCanvas.scale;
-    const h = 600 / scaledCanvas.scale;
+    const w = 1000 / this.renderer.scaledCanvas.scale;
+    const h = 600 / this.renderer.scaledCanvas.scale;
     this.cameraBox = {
       position: {
         x: this.position.x + this.width / 2 - w / 2,
-        y: this.position.y + this.height / 2 - h / 2,
+        y: this.position.y + this.height / 2 - h / 2 - this.position.z / 2,
       },
       width: w,
       height: h,
     };
   }
 
-  panCamera() {
-    const cameraX = -camera.position.x;
-    const cameraY = -camera.position.y;
-    const canvasWidth = scaledCanvas.width;
-    const canvasHeight = scaledCanvas.height;
-    const boxX = this.cameraBox.position.x;
-    const boxY = this.cameraBox.position.y;
-    const boxWidth = this.cameraBox.width;
-    const boxHeight = this.cameraBox.height;
-
-    const leftBoundary = cameraX;
-    const rightBoundary = cameraX + canvasWidth - boxWidth;
-    const topBoundary = cameraY;
-    const bottomBoundary = cameraY + canvasHeight - boxHeight;
-
-    if (boxX < leftBoundary) {
-      camera.position.x = -boxX;
-    } else if (boxX > rightBoundary) {
-      camera.position.x = -boxX + canvasWidth - boxWidth;
-    }
-
-    if (boxY < topBoundary) {
-      camera.position.y = -boxY;
-    } else if (boxY > bottomBoundary) {
-      camera.position.y = -boxY + canvasHeight - boxHeight;
-    }
-  }
-
   applyFriction() {
     this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y;
-    this.velocity.x *= frictionMultiplier;
-    this.velocity.y *= frictionMultiplier;
+    this.position.y += this.velocity.y * 0.5;
+    this.velocity.x *= Constants.FRICTION_MULTIPLIER;
+    this.velocity.y *= Constants.FRICTION_MULTIPLIER;
   }
 
   applyGravity() {
     this.position.z += this.velocity.z;
-    this.velocity.z -= gravity;
+    this.velocity.z -= Constants.GRAVITY;
   }
 
   jump() {
-    this.velocity.z = jumpStrength;
+    if (!this.canJump) return;
+    this.canJump = false;
+    this.velocity.z = Constants.JUMP_STRENGTH;
   }
 
-  updateHitbox(chunkSize = world1.chunkSize) {
-    const playerGrid = toGridCoordinate({
+  updateHitbox() {
+    const grid = toGridCoordinate({
       x: this.position.x,
       y: this.position.y + this.height / 4,
       z: this.position.z,
     });
+    const chunkSize = this.world.chunkSize ?? 0;
     this.chunkPosition = {
-      x: Math.floor(playerGrid.x / chunkSize),
-      y: Math.floor(playerGrid.y / chunkSize),
+      x: Math.floor(grid.x / chunkSize),
+      y: Math.floor(grid.y / chunkSize),
     };
 
     this.hitbox = {
-      position: playerGrid,
+      position: grid,
       width: 1,
       height: 1,
       depth: 1,
@@ -245,87 +218,7 @@ class Player extends Life {
       k.y *= 0.7;
     }
 
-    k.y *= 0.5;
-
-    this.velocity.x += k.x * playerSpeed;
-    this.velocity.y += k.y * playerSpeed;
-  }
-
-  respondToFlatCollision() {
-    const collisionBlocks = this.isCollision();
-    if (collisionBlocks.length === 0) return;
-
-    if (this.velocity.x < 0) {
-      this.velocity.x = 0;
-
-      let maxBlock = collisionBlocks[0];
-      for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].hitbox.x > maxBlock.hitbox.x) {
-          maxBlock = collisionBlocks[i];
-        }
-      }
-
-      this.position.x = maxBlock.position.x + maxBlock.width + 0.01;
-    } else if (this.velocity.x > 0) {
-      this.velocity.x = 0;
-
-      let maxBlock = collisionBlocks[0];
-      for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].hitbox.x < maxBlock.hitbox.x) {
-          maxBlock = collisionBlocks[i];
-        }
-      }
-
-      this.position.x = maxBlock.position.x - this.width + 0.01;
-    } else if (this.velocity.y < 0) {
-      this.velocity.y = 0;
-
-      let maxBlock = collisionBlocks[0];
-      for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].hitbox.y > maxBlock.hitbox.y) {
-          maxBlock = collisionBlocks[i];
-        }
-      }
-
-      this.position.y = maxBlock.position.y + maxBlock.height - 0.01;
-    } else if (this.velocity.y > 0) {
-      this.velocity.y = 0;
-
-      let maxBlock = collisionBlocks[0];
-      for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].hitbox.y < maxBlock.hitbox.y) {
-          maxBlock = collisionBlocks[i];
-        }
-      }
-
-      this.position.y = maxBlock.position.y - this.height - 0.01;
-    }
-  }
-
-  respondToDepthCollision() {
-    const collisionBlocks = this.isCollision(true);
-    if (collisionBlocks.length === 0) return;
-
-    if (this.velocity.z < 0) {
-      this.velocity.z = 0;
-
-      let maxZBlock = collisionBlocks[0];
-      for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].hitbox.z > maxZBlock.hitbox.z) {
-          maxZBlock = collisionBlocks[i];
-        }
-      }
-
-      this.position.z =
-        maxZBlock.position.z + this.hitbox.depth * h * 0.25 + 0.01;
-    }
-    // else if (this.velocity.z > 0) {
-    //   this.velocity.z = 0;
-
-    //   const offset = this.hitbox.position.z - this.position.z;
-
-    //   this.position.z =
-    //     collisionBlock.position.z + collisionBlock.depth - offset + 0.01;
-    // }
+    this.velocity.x += k.x * Constants.PLAYER_SPEED;
+    this.velocity.y += k.y * Constants.PLAYER_SPEED;
   }
 }

@@ -1,6 +1,5 @@
 class Sprite {
   constructor({
-    name,
     position,
     gridPosition,
     imageSrc,
@@ -8,7 +7,8 @@ class Sprite {
     frameBuffer = 3,
     scale = 1,
   }) {
-    this.name = name;
+    this.canvas = document.getElementById(Constants.CANVAS_ID);
+    this.c = this.canvas.getContext("2d");
     this.position = position;
     this.gridPosition = gridPosition;
     this.scale = scale;
@@ -19,6 +19,7 @@ class Sprite {
       height: 1,
       depth: 1,
     };
+    this.imageLoaded = false;
     this.image = new Image();
     this.image.onload = () => {
       this.width = (this.image.width / this.frameRate) * this.scale;
@@ -31,7 +32,7 @@ class Sprite {
           depth: 1,
         };
       }
-      if (this.name === "air") this.image.src = "";
+      this.imageLoaded = true;
     };
     this.image.src = imageSrc;
     this.currentFrame = 0;
@@ -51,17 +52,7 @@ class Sprite {
       height: this.image.height,
     };
 
-    // if (this.name !== "air") {
-    //   c.fillStyle = "rgba(255, 0, 0, 0.1)";
-    //   c.fillRect(
-    //     this.position.x,
-    //     this.position.y - this.position.z,
-    //     this.width,
-    //     this.height
-    //   );
-    // }
-
-    c.drawImage(
+    this.c.drawImage(
       this.image,
       cropbox.position.x,
       cropbox.position.y,

@@ -8,6 +8,10 @@ function getParameterByName(name, url = window.location.href) {
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
+function getRandomChance(percent) {
+  return Math.random() < percent / 100;
+}
+
 /**
  * Determines if the block is adjacent to any visible face of the other block.
  * @param {object} block1 - The block to check for adjacency.
@@ -23,9 +27,9 @@ function isAdjacent({ block1, block2 }) {
 
   return adjacentOffsets.some(
     (offset) =>
-      block1.hitbox.position.z === block2.hitbox.position.z + offset.dz &&
-      block1.hitbox.position.x === block2.hitbox.position.x + offset.dx &&
-      block1.hitbox.position.y === block2.hitbox.position.y + offset.dy
+      block1.grid.position.z === block2.grid.position.z + offset.dz &&
+      block1.grid.position.x === block2.grid.position.x + offset.dx &&
+      block1.grid.position.y === block2.grid.position.y + offset.dy
   );
 }
 
@@ -38,19 +42,19 @@ function sameCordsOffsetOne({ object1, object2 }) {
 }
 
 function collisionCursor(block, hover = false) {
-  const { x: mouseX, y: mouseY } = mouse.worldPosition;
+  const { x: mouseX, y: mouseY } = renderer.mouse.worldPosition;
 
   const ellipse = {
     center: {
-      x: block.position.x + block.width / 2,
+      x: block.position.x + Constants.TILE_WIDTH / 2,
       y:
         block.position.y +
-        block.height * 0.625 -
+        Constants.TILE_HEIGHT * 0.625 -
         (block.position.z ?? 0) / 2 +
-        (hover ? world1.hoverBlockDepth / 2 : 0),
+        (hover ? world.hoverBlockDepth / 2 : 0),
     },
-    radiusX: block.width / 2 + 2,
-    radiusY: block.height * 0.375,
+    radiusX: Constants.TILE_WIDTH / 2 + 2,
+    radiusY: Constants.TILE_HEIGHT * 0.375,
   };
 
   const dx = Math.abs(mouseX - ellipse.center.x) / ellipse.radiusX;
@@ -129,9 +133,13 @@ const axis = {
 
 function toScreenCoordinate(tile) {
   return {
-    x: tile.x * axis.x.x * (0.5 * w) + tile.y * axis.y.x * (0.5 * w),
-    y: tile.x * axis.x.y * (0.5 * h) + tile.y * axis.y.y * (0.5 * h),
-    z: tile.z * (0.5 * h),
+    x:
+      tile.x * axis.x.x * (0.5 * Constants.TILE_WIDTH) +
+      tile.y * axis.y.x * (0.5 * Constants.TILE_WIDTH),
+    y:
+      tile.x * axis.x.y * (0.5 * Constants.TILE_HEIGHT) +
+      tile.y * axis.y.y * (0.5 * Constants.TILE_HEIGHT),
+    z: tile.z * (0.5 * Constants.TILE_HEIGHT),
   };
 }
 
@@ -150,16 +158,16 @@ function invertMatrix(a, b, c, d) {
 }
 
 function toGridCoordinate(screen) {
-  const a = axis.x.x * (0.5 * w);
-  const b = axis.y.x * (0.5 * w);
-  const c = axis.x.y * (0.5 * h);
-  const d = axis.y.y * (0.5 * h);
+  const a = axis.x.x * (0.5 * Constants.TILE_WIDTH);
+  const b = axis.y.x * (0.5 * Constants.TILE_WIDTH);
+  const c = axis.x.y * (0.5 * Constants.TILE_HEIGHT);
+  const d = axis.y.y * (0.5 * Constants.TILE_HEIGHT);
 
   const inv = invertMatrix(a, b, c, d);
 
   return {
     x: Math.floor(screen.x * inv.a + screen.y * inv.b + 0.5),
     y: Math.floor(screen.x * inv.c + screen.y * inv.d + 0.5),
-    z: Math.floor((screen.z * 2) / h + 0.5),
+    z: Math.floor((screen.z * 2) / Constants.TILE_HEIGHT + 0.5),
   };
 }

@@ -7,8 +7,12 @@
     <link rel="icon" type="image/png" href="../img/logo.png">
     <script src="../js/classes/Sprite.js" defer></script>
     <script src="../js/classes/Life.js" defer></script>
-    <script src="../js/classes/player.js" defer></script>
+    <script src="../js/classes/Player.js" defer></script>
+    <script src="../js/classes/Zombie.js" defer></script>
+    <script src="../js/classes/GameManager.js" defer></script>
     <script src="../js/classes/World.js" defer></script>
+    <script src="../js/classes/Renderer.js" defer></script>
+    <script src="../js/classes/Input.js" defer></script>
     <script src="../js/perlin.js" defer></script>
     <script src="../js/utils.js" defer></script>
     <script src="../js/game.js" defer></script>
@@ -31,17 +35,23 @@
     <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <div id="deathmenu" class="hidden card" style="transform-origin: center;">
             <h1 class="title">You died!</h1>
-            <button class="button" onclick="player1.respawn();">Respawn</button>
-            <button class="button" onclick="saveGame();">Save Game</button>
-            <a class="button button2" href="../index.html">Menu</a>
+            <div class="grid grid-cols-2 gap-3">
+                <button class="button" onclick="gameManager.toggleDeath();">Respawn</button>
+                <button class="button" onclick="gameManager.saveGame();">Save Game</button>
+                <button class="button" onclick="localStorage.clear();">Clear Save</button>
+                <a class="button button2" href="../index.html">Menu</a>
+            </div>
         </div>
     </div>
     <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <div id="pausemenu" class="hidden card" style="transform-origin: center;">
             <h1 class="title">Paused</h1>
-            <button class="button" onclick="togglePause();">Resume</button>
-            <button class="button" onclick="saveGame();">Save Game</button>
-            <a class="button button2" href="../index.html">Menu</a>
+            <div class="grid grid-cols-2 gap-3">
+                <button class="button" onclick="gameManager.togglePause();">Resume</button>
+                <button class="button" onclick="gameManager.saveGame();">Save Game</button>
+                <button class="button" onclick="localStorage.clear();">Clear Save</button>
+                <a class="button button2" href="../index.html">Menu</a>
+            </div>
         </div>
     </div>
     <div id="healthbar" class="select-none absolute bottom-[90px] left-1/2 -translate-x-full ml-auto p-3 flex">

@@ -85,7 +85,7 @@
 		fade-in 2s ease-in-out,
 		animate-color-1 4s infinite linear alternate,
 		4s animate-color-2 1s infinite linear alternate;
-	&.creative {
+	&.default {
 		background: radial-gradient(
 			300px circle at 55% 60% in oklab,
 			var(--shine-2),
@@ -97,20 +97,7 @@
 			var(--card-bg) 100%
 		);
 	}
-	&.survival {
-		animation-delay: 300ms;
-		background: radial-gradient(
-			300px circle at 55% 60% in oklab,
-			var(--shine-2-2),
-			transparent 100% 100%
-		),
-		radial-gradient(
-			farthest-side circle at 75% 30% in oklab,
-			var(--shine-1-2) 0%,
-			var(--card-bg-2) 100%
-		);
-	}
-	&.pvp {
+	&.flat {
 		animation-delay: 600ms;
 		background: radial-gradient(
 			300px circle at 55% 60% in oklab,
@@ -172,8 +159,8 @@
 	display: grid;
 	place-items: center;
 	outline: none !important;
-	width: 40%;
-	height: 2.2rem;
+	width: 6.2rem;
+	height: 2.6rem;
 	background-color: white;
 	color: black;
 	font-size: 0.9rem;
