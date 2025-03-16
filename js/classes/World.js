@@ -1,19 +1,19 @@
 class World {
   constructor({
+    renderer,
     structure,
     player,
     worldMode = "default",
-    seed = 1,
     renderDistance = 0,
     chunkSize = 16,
     chunkHeight = 16,
     airHeight = 8,
     mobCap = 0,
   }) {
+    this.renderer = renderer;
     this.structure = structure;
     this.player = player;
     this.worldMode = worldMode;
-    Math.random = this.seededRandom(seed);
     this.renderDistance = renderDistance;
     this.chunkSize = chunkSize;
     this.chunkHeight = chunkHeight;
@@ -35,15 +35,6 @@ class World {
     const savedChunks = savedChunksString ? JSON.parse(savedChunksString) : {};
     this.chunkMap = savedChunks;
     this.persistantChunks = savedChunks;
-  }
-
-  seededRandom(seed) {
-    const m = 2 ** 35 - 31;
-    const a = 185852;
-    let s = seed % m;
-    return function () {
-      return (s = (s * a) % m) / m;
-    };
   }
 
   /**
@@ -124,7 +115,7 @@ class World {
     if (
       sameCordsOffsetOne({
         object1: this.player.hitbox.position,
-        object2: block.grid.position,
+        object2: block.gridPosition,
       })
     ) {
       this.player.draw();
@@ -136,7 +127,7 @@ class World {
       if (
         sameCordsOffsetOne({
           object1: enemy.hitbox.position,
-          object2: block.grid.position,
+          object2: block.gridPosition,
         })
       ) {
         enemy.update();
@@ -202,7 +193,7 @@ class World {
               heightDifference,
             }),
             position: toScreenCoordinate(gridPosition),
-            grid: { position: gridPosition, width: 1, height: 1, depth: 1 },
+            gridPosition,
           });
 
           if (
@@ -244,7 +235,7 @@ class World {
               heightDifference,
             }),
             position: toScreenCoordinate(gridPosition),
-            grid: { position: gridPosition, width: 1, height: 1, depth: 1 },
+            gridPosition,
           });
         }
       }
@@ -373,12 +364,7 @@ class World {
               heightDifference,
             }),
             position: toScreenCoordinate(gridPosition),
-            grid: {
-              position: gridPosition,
-              width: 1,
-              height: 1,
-              depth: 1,
-            },
+            gridPositon,
           });
         }
       }

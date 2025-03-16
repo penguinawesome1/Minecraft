@@ -1,7 +1,7 @@
 class GameManager {
   constructor({
     player,
-    worldMode,
+    world,
     hotbarID,
     healthbarID,
     pauseMenuID,
@@ -9,7 +9,7 @@ class GameManager {
     instantRespawn,
   }) {
     this.player = player;
-    this.worldMode = worldMode;
+    this.world = world;
     this.instantRespawn = instantRespawn;
     this.pause = false;
     this.dev = false;
@@ -18,15 +18,11 @@ class GameManager {
     this.setupUI(hotbarID, healthbarID);
   }
 
-  setObjects({ world }) {
-    this.world = world;
-  }
-
   setupGameMenus(pauseMenuID, deathMenuID) {
     this.pauseMenu = document.getElementById(pauseMenuID);
     this.deathMenu = document.getElementById(deathMenuID);
-    this.pauseMenu.classList.add(this.worldMode);
-    this.deathMenu.classList.add(this.worldMode);
+    this.pauseMenu.classList.add(this.world.worldMode);
+    this.deathMenu.classList.add(this.world.worldMode);
   }
 
   setupUI(hotbarID, healthbarID) {

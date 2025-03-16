@@ -7,15 +7,38 @@
     <link rel="icon" type="image/png" href="./img/logo.png">
     <link href="./css/card.css" rel="stylesheet">
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <script defer>
+        function selectPlayer(player) {
+            localStorage.setItem("selectedPlayer", player);
+        }
+    </script>
+
+    <style>
+        .sprite {
+            /* background-size: 750% 750%;
+            background-repeat: no-repeat; */
+            background-size: cover;
+        }
+        .spritePlayer1 {
+            background-image: url("./img/players/player1/Idle.png");
+            /* background-position: -35px -35px; */
+        }
+    </style>
 </head>
 <body>
-    <div class="w-full h-svh grid place-items-center bg-gray-900">
+    <div class="pt-[10%] w-full h-svh flex flex-col justify-evenly items-center bg-gray-900">
         <div class="flex gap-20 rounded-[1rem] bg-gray-600 font-[system-ui]">
             <a class="card default title" href="./public/game.html?worldmode=default">Default</a>
             <a class="card flat title" href="./public/game.html?worldmode=flat">Flat</a>
             <a class="card skyblock title" href="./public/game.html?worldmode=skyblock">Sky Block</a>
+        </div>
+        <div class="flex gap-20 rounded-lg bg-gray-600 font-[system-ui]">
+            <button class="w-20 h-20 bg-gray-300 rounded-lg hover:scale-105 active:scale-90 transition-transform duration-200 sprite spritePlayer1" onclick="selectPlayer('player1')"></button>
+            <button class="w-20 h-20 bg-gray-300 rounded-lg hover:scale-105 active:scale-90 transition-transform duration-200 sprite spritePlayer1" onclick="selectPlayer('player1')"></button>
+            <button class="w-20 h-20 bg-gray-300 rounded-lg hover:scale-105 active:scale-90 transition-transform duration-200 sprite spritePlayer1" onclick="selectPlayer('player1')"></button>
+            <button class="w-20 h-20 bg-gray-300 rounded-lg hover:scale-105 active:scale-90 transition-transform duration-200 sprite spritePlayer1" onclick="selectPlayer('player1')"></button>
         </div>
     </div>
 </body>

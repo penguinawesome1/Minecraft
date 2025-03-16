@@ -21,6 +21,7 @@ class Life extends Sprite {
       depth: 0,
     };
 
+    this.animations = animations;
     for (let key in this.animations) {
       const image = new Image();
       image.src = this.animations[key].imageSrc;
@@ -39,14 +40,16 @@ class Life extends Sprite {
     this.frameRate = this.animations[key].frameRate;
   }
 
-  applyGravity() {
-    this.position.y += this.velocity.y;
-    this.velocity.y += gravity;
-  }
-
   applyFriction() {
     this.position.x += this.velocity.x;
-    this.velocity.x *= frictionMultiplier;
+    this.position.y += this.velocity.y * 0.5;
+    this.velocity.x *= Constants.FRICTION_MULTIPLIER;
+    this.velocity.y *= Constants.FRICTION_MULTIPLIER;
+  }
+
+  applyGravity() {
+    this.position.z += this.velocity.z;
+    this.velocity.z -= Constants.GRAVITY;
   }
 
   isCollision(includesFeet = false) {
@@ -71,14 +74,14 @@ class Life extends Sprite {
 
       for (const block of chunk) {
         if (
-          block.blockNum !== -1 &&
+          block.blockNum !== Renderer.AIR &&
           collisionGrid({
             object1: this.hitbox,
-            object2: block.grid,
+            object2: block,
             includesFeet,
           })
         ) {
-          // block.blockNum = Block.MISSING;
+          // block.blockNum = Renderer.MISSING;
           collisionBlocks.push(block);
         }
       }
@@ -96,7 +99,7 @@ class Life extends Sprite {
 
       let maxBlock = collisionBlocks[0];
       for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].grid.position.x > maxBlock.grid.position.x) {
+        if (collisionBlocks[i].gridPosition.x > maxBlock.gridPosition.x) {
           maxBlock = collisionBlocks[i];
         }
       }
@@ -107,7 +110,7 @@ class Life extends Sprite {
 
       let maxBlock = collisionBlocks[0];
       for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].grid.position.x < maxBlock.grid.position.x) {
+        if (collisionBlocks[i].gridPosition.x < maxBlock.gridPosition.x) {
           maxBlock = collisionBlocks[i];
         }
       }
@@ -118,7 +121,7 @@ class Life extends Sprite {
 
       let maxBlock = collisionBlocks[0];
       for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].grid.position.y > maxBlock.grid.position.y) {
+        if (collisionBlocks[i].gridPosition.y > maxBlock.gridPosition.y) {
           maxBlock = collisionBlocks[i];
         }
       }
@@ -129,7 +132,7 @@ class Life extends Sprite {
 
       let maxBlock = collisionBlocks[0];
       for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].grid.position.y < maxBlock.grid.position.y) {
+        if (collisionBlocks[i].gridPosition.y < maxBlock.gridPosition.y) {
           maxBlock = collisionBlocks[i];
         }
       }
@@ -143,12 +146,14 @@ class Life extends Sprite {
     if (collisionBlocks.length === 0) return;
 
     if (this.velocity.z < 0) {
+      const fallDamage = Math.floor(-this.velocity.z / 5);
+      if (fallDamage > 0) this.takeDamage(fallDamage);
       this.velocity.z = 0;
       this.canJump = true;
 
       let maxZBlock = collisionBlocks[0];
       for (let i = 1; i < collisionBlocks.length; i++) {
-        if (collisionBlocks[i].grid.position.z > maxZBlock.grid.position.z) {
+        if (collisionBlocks[i].gridPosition.z > maxZBlock.gridPosition.z) {
           maxZBlock = collisionBlocks[i];
         }
       }
@@ -157,14 +162,20 @@ class Life extends Sprite {
         maxZBlock.position.z +
         this.hitbox.depth * Constants.TILE_HEIGHT * 0.25 +
         0.01;
+    } else if (this.velocity.z > 0) {
+      this.velocity.z = 0;
+
+      // let minZBlock = collisionBlocks[0];
+      // for (let i = 1; i < collisionBlocks.length; i++) {
+      //   if (collisionBlocks[i].gridPosition.z < minZBlock.gridPosition.z) {
+      //     minZBlock = collisionBlocks[i];
+      //   }
+      // }
+
+      // this.position.z =
+      //   minZBlock.position.z -
+      //   this.hitbox.depth * Constants.TILE_HEIGHT * 0.25 -
+      //   0.01;
     }
-    // else if (this.velocity.z > 0) {
-    //   this.velocity.z = 0;
-
-    //   const offset = this.hitbox.position.z - this.position.z;
-
-    //   this.position.z =
-    //     collisionBlock.position.z + collisionBlock.depth - offset + 0.01;
-    // }
   }
 }

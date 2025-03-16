@@ -27,9 +27,9 @@ function isAdjacent({ block1, block2 }) {
 
   return adjacentOffsets.some(
     (offset) =>
-      block1.grid.position.z === block2.grid.position.z + offset.dz &&
-      block1.grid.position.x === block2.grid.position.x + offset.dx &&
-      block1.grid.position.y === block2.grid.position.y + offset.dy
+      block1.gridPosition.z === block2.gridPosition.z + offset.dz &&
+      block1.gridPosition.x === block2.gridPosition.x + offset.dx &&
+      block1.gridPosition.y === block2.gridPosition.y + offset.dy
   );
 }
 
@@ -79,19 +79,19 @@ function collisionScreen({ object1, object2 }) {
 }
 
 function collisionGrid({ object1, object2, includesFeet }) {
-  const x1 = object1.position.x;
-  const y1 = object1.position.y;
-  const z1 = object1.position.z + object1.depth + (includesFeet ? 0 : 1); // add depth to start under the obj
   const w1 = object1.width;
   const h1 = object1.height;
   const d1 = object1.depth;
+  const x1 = object1.position.x;
+  const y1 = object1.position.y;
+  const z1 = object1.position.z + d1 + (includesFeet ? 0 : 1); // add depth to start under the obj
 
-  const x2 = object2.position.x;
-  const y2 = object2.position.y;
-  const z2 = object2.position.z + object2.depth; // add depth to start under the obj
-  const w2 = object2.width;
-  const h2 = object2.height;
-  const d2 = object2.depth;
+  const w2 = 1;
+  const h2 = 1;
+  const d2 = 1;
+  const x2 = object2.gridPosition.x;
+  const y2 = object2.gridPosition.y;
+  const z2 = object2.gridPosition.z + d2; // add depth to start under the obj
 
   return (
     z1 + d1 >= z2 &&

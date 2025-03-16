@@ -4,25 +4,26 @@ class Sprite {
     gridPosition,
     imageSrc,
     frameRate = 1,
-    frameBuffer = 3,
+    frameBuffer = 15,
     scale = 1,
+    animations,
   }) {
     this.canvas = document.getElementById(Constants.CANVAS_ID);
     this.c = this.canvas.getContext("2d");
     this.position = position;
     this.gridPosition = gridPosition;
     this.scale = scale;
-    this.frameRate = frameRate;
     this.hitbox = {
       position: this.position,
       width: 1,
       height: 1,
       depth: 1,
     };
-    this.imageLoaded = false;
+    this.loaded = false;
     this.image = new Image();
     this.image.onload = () => {
       this.width = (this.image.width / this.frameRate) * this.scale;
+      // this.height = this.image.height * 0.25 * this.scale;
       this.height = this.image.height * this.scale;
       if (this.gridPosition) {
         this.hitbox = {
@@ -32,23 +33,39 @@ class Sprite {
           depth: 1,
         };
       }
-      this.imageLoaded = true;
+      this.loaded = true;
     };
     this.image.src = imageSrc;
+    this.frameRate = frameRate;
     this.currentFrame = 0;
     this.frameBuffer = frameBuffer;
     this.elapsedFrames = 0;
+    this.direction = Sprite.SW;
   }
+
+  static SW = 0;
+  static SE = 1;
+  static NW = 2;
+  static NE = 3;
 
   draw() {
     if (!this.image) return;
 
+    // const cropbox = {
+    //   position: {
+    //     x: this.currentFrame * (this.image.width / this.frameRate),
+    //     y: this.direction * this.image.height * 0.25,
+    //   },
+    //   width: this.image.width / this.frameRate,
+    //   height: this.image.height * 0.25,
+    // };
+
     const cropbox = {
       position: {
-        x: this.currentFrame * (this.image.width / this.frameRate),
+        x: 0,
         y: 0,
       },
-      width: this.image.width / this.frameRate,
+      width: this.image.width,
       height: this.image.height,
     };
 

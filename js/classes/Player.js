@@ -1,5 +1,8 @@
 class Player extends Life {
   constructor({
+    gameManager,
+    renderer,
+    world,
     gamemode,
     spawnRadius,
     imageSrc,
@@ -11,7 +14,7 @@ class Player extends Life {
       position: {
         x: Math.random() * spawnRadius,
         y: Math.random() * spawnRadius,
-        z: 200,
+        z: 100,
       },
       imageSrc,
       frameRate,
@@ -19,6 +22,9 @@ class Player extends Life {
       animations,
     });
 
+    this.gameManager = gameManager;
+    this.renderer = renderer;
+    this.world = world;
     this.gamemode = gamemode;
     this.spawn = { ...this.position };
     this.chunkPosition = { x: 0, y: 0 };
@@ -87,56 +93,62 @@ class Player extends Life {
   update() {
     this.updateFrames();
     this.updateHitbox();
-
     this.updateCameraBox();
     this.renderer.panCamera(this);
-
-    if (this.gameManager.dev) {
-      // draw camera box
-      this.renderer.c.fillStyle = "rgba(0, 0, 0, 0.2)";
-      this.renderer.c.fillRect(
-        this.cameraBox.position.x,
-        this.cameraBox.position.y,
-        this.cameraBox.width,
-        this.cameraBox.height
-      );
-
-      // draw player
-      this.renderer.c.fillStyle = "rgba(255, 0, 0, 0.2)";
-      this.renderer.c.fillRect(
-        this.position.x,
-        this.position.y,
-        this.width,
-        this.height
-      );
-    }
-
+    this.tryToDisplayHitboxes();
     this.checkForKeys();
 
-    this.applyGravity();
-    this.respondToDepthCollision();
-    this.updateHitbox();
-
     this.applyFriction();
+    this.updateHitbox();
     // this.respondToFlatCollision();
+    this.applyGravity();
+    this.updateHitbox();
+    this.respondToDepthCollision();
 
     // this.checkForHit();
+    this.checkForVoidDamage();
+    this.checkForDeath();
+  }
 
-    // Check for fall damage
+  checkForVoidDamage() {
     if (this.position.z < Constants.VOID_DEPTH) {
       this.takeDamage(2);
     }
+  }
 
-    if (this.health <= 0) {
+  checkForDeath() {
+    if (this.health < 0) {
       this.gameManager.toggleDeath();
       this.gameManager.respawnPlayer(this);
     }
   }
 
+  tryToDisplayHitboxes() {
+    if (!this.gameManager.dev) return;
+
+    // draw camera box
+    this.renderer.c.fillStyle = "rgba(0, 0, 0, 0.2)";
+    this.renderer.c.fillRect(
+      this.cameraBox.position.x,
+      this.cameraBox.position.y,
+      this.cameraBox.width,
+      this.cameraBox.height
+    );
+
+    // draw player
+    this.renderer.c.fillStyle = "rgba(255, 0, 0, 0.2)";
+    this.renderer.c.fillRect(
+      this.position.x,
+      this.position.y,
+      this.width,
+      this.height
+    );
+  }
+
   takeDamage(amount) {
     if (this.invulnerable || this.gameManager.dev) return;
 
-    this.health = Math.max(0, this.health - amount);
+    this.health = this.health - amount;
     this.gameManager.updateHealthbar();
 
     this.invulnerable = true;
@@ -161,18 +173,6 @@ class Player extends Life {
       width: w,
       height: h,
     };
-  }
-
-  applyFriction() {
-    this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y * 0.5;
-    this.velocity.x *= Constants.FRICTION_MULTIPLIER;
-    this.velocity.y *= Constants.FRICTION_MULTIPLIER;
-  }
-
-  applyGravity() {
-    this.position.z += this.velocity.z;
-    this.velocity.z -= Constants.GRAVITY;
   }
 
   jump() {
@@ -214,6 +214,22 @@ class Player extends Life {
     if (k.x && k.y) {
       k.x *= 0.7;
       k.y *= 0.7;
+    }
+
+    this.switchSprite(k.x || k.y ? "Run" : "Idle");
+
+    if (k.x > 0) {
+      if (k.y > 0) {
+        this.direction = Sprite.SE;
+      } else if (k.y < 0) {
+        this.direction = Sprite.NE;
+      }
+    } else if (k.x < 0) {
+      if (k.y > 0) {
+        this.direction = Sprite.SW;
+      } else if (k.y < 0) {
+        this.direction = Sprite.NW;
+      }
     }
 
     this.velocity.x += k.x * Constants.PLAYER_SPEED;
