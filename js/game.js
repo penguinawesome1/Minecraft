@@ -12,6 +12,7 @@ const Constants = {
   CANVAS_ID: "canvas",
 };
 
+const structure = new Structure();
 const player = new Player({
   gamemode: Constants.GAME_MODE,
   spawnRadius: 10,
@@ -36,6 +37,7 @@ const gameManager = new GameManager({
   instantRespawn: false,
 });
 const world = new World({
+  structure,
   player,
   worldMode: Constants.WORLD_MODE,
   seed: 1,
@@ -50,6 +52,7 @@ const input = new Input({ player, world, gameManager, renderer });
 
 renderer.setInitialCameraPosition(player);
 
+gameManager.setObjects({ world });
 player.setObjects({ gameManager, renderer, world });
 world.setObjects({ renderer });
 

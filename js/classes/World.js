@@ -1,5 +1,6 @@
 class World {
   constructor({
+    structure,
     player,
     worldMode = "default",
     seed = 1,
@@ -9,6 +10,7 @@ class World {
     airHeight = 8,
     mobCap = 0,
   }) {
+    this.structure = structure;
     this.player = player;
     this.worldMode = worldMode;
     Math.random = this.seededRandom(seed);
@@ -66,9 +68,10 @@ class World {
         const chunk = this.chunkMap[`${chunkX},${chunkY}`];
         if (!chunk) {
           // generate any chunks that are missing
-          if (this.worldMode !== "skyblock") {
+          if (this.worldMode === "default")
             this.generateOneChunk(chunkX, chunkY);
-          }
+          if (this.worldMode === "flat")
+            this.generateOneChunkFlat(chunkX, chunkY);
           continue;
         }
 
@@ -186,6 +189,7 @@ class World {
     const worldYOffset = chunkY * chunkSize;
     const heightDifference = chunkHeight - this.airHeight;
     const chunk = [];
+    const treeCords = [];
 
     for (let y = worldYOffset; y < worldYOffset + chunkSize; y++) {
       for (let x = worldXOffset; x < worldXOffset + chunkSize; x++) {
@@ -200,12 +204,52 @@ class World {
             position: toScreenCoordinate(gridPosition),
             grid: { position: gridPosition, width: 1, height: 1, depth: 1 },
           });
+
+          if (
+            getRandomChance(30) &&
+            chunk.at(-1).blockNum === Renderer.AIR &&
+            chunk.at(-2).blockNum === Renderer.DIRT
+          ) {
+            treeCords.push(gridPosition);
+          }
         }
       }
     }
-
+    for (const gridPosition of treeCords) {
+      this.structure.generateTree({
+        gridPosition,
+        chunk,
+        chunkSize,
+        chunkHeight,
+      });
+    }
     this.updateVisibility(chunk);
+    this.chunkMap[`${chunkX},${chunkY}`] = chunk;
+  }
 
+  generateOneChunkFlat(chunkX, chunkY) {
+    const { chunkSize, chunkHeight } = this;
+    const heightDifference = 5; // height of ground
+    const worldXOffset = chunkX * chunkSize;
+    const worldYOffset = chunkY * chunkSize;
+    const chunk = [];
+
+    for (let y = worldYOffset; y < worldYOffset + chunkSize; y++) {
+      for (let x = worldXOffset; x < worldXOffset + chunkSize; x++) {
+        for (let z = 0; z < chunkHeight; z++) {
+          const gridPosition = { x, y, z };
+          chunk.push({
+            blockNum: this.getBlockNumFlat({
+              z,
+              heightDifference,
+            }),
+            position: toScreenCoordinate(gridPosition),
+            grid: { position: gridPosition, width: 1, height: 1, depth: 1 },
+          });
+        }
+      }
+    }
+    this.updateVisibility(chunk);
     this.chunkMap[`${chunkX},${chunkY}`] = chunk;
   }
 
@@ -256,16 +300,41 @@ class World {
     dirtChance = getRandomChance(5),
     noiseGrass = 0.25,
   }) {
+    const groundLevel = noiseVal * (heightDifference - 1) + 1;
     if (z === 0) return Renderer.BEDROCK;
-    if (z > noiseVal * (heightDifference - 1) + 1) return Renderer.AIR;
+    if (z > groundLevel) return Renderer.AIR;
     if (dirtChance) return Renderer.DIRT;
-    if (noiseVal > noiseGrass) return Renderer.GRASS;
+    if (noiseVal > noiseGrass) {
+      if (z === Math.floor(groundLevel)) {
+        return Renderer.GRASS;
+      }
+      return Renderer.DIRT;
+    }
     return Renderer.STONE;
   }
 
-  getBlockNumSkyBlock({ z, heightDifference }) {
-    if (z < heightDifference - 1) return Renderer.DIRT;
+  getBlockNumSkyBlock({
+    gridPosition,
+    playerChunkX,
+    playerChunkY,
+    heightDifference,
+  }) {
+    const { x, y, z } = gridPosition;
+    const chunkSize = this.chunkSize;
+    if (
+      x < playerChunkX + chunkSize * 0.5 &&
+      y >= playerChunkY + chunkSize * 0.5
+    )
+      return Renderer.AIR;
     if (z === heightDifference - 1) return Renderer.GRASS;
+    if (z < heightDifference - 1) return Renderer.DIRT;
+    return Renderer.AIR;
+  }
+
+  getBlockNumFlat({ z, heightDifference }) {
+    if (z === 0) return Renderer.BEDROCK;
+    if (z === heightDifference - 1) return Renderer.GRASS;
+    if (z < heightDifference - 1) return Renderer.DIRT;
     return Renderer.AIR;
   }
 
@@ -286,26 +355,23 @@ class World {
 
   generateSkyBlock() {
     const { x: playerChunkX, y: playerChunkY } = this.player.chunkPosition;
+    const { chunkSize, chunkHeight } = this;
+    const heightDifference = 5; // height of ground
     const key = `${playerChunkX},${playerChunkY}`;
     if (this.chunkMap[key]) return;
-
-    const chunkSize = this.chunkSize;
-    const heightDifference = 5; // height of ground
 
     let chunk = [];
     for (let y = playerChunkY; y < playerChunkY + chunkSize; y++) {
       for (let x = playerChunkX; x < playerChunkX + chunkSize; x++) {
-        for (let z = 0; z < this.chunkHeight; z++) {
-          if (
-            x < playerChunkY + chunkSize * 0.5 &&
-            y >= playerChunkY + chunkSize * 0.5
-          ) {
-            continue;
-          }
-
+        for (let z = 0; z < chunkHeight; z++) {
           const gridPosition = { x, y, z };
           chunk.push({
-            blockNum: this.getBlockNumSkyBlock({ z, heightDifference }),
+            blockNum: this.getBlockNumSkyBlock({
+              gridPosition,
+              playerChunkX,
+              playerChunkY,
+              heightDifference,
+            }),
             position: toScreenCoordinate(gridPosition),
             grid: {
               position: gridPosition,
@@ -317,6 +383,16 @@ class World {
         }
       }
     }
+
+    this.structure.generateTree({
+      gridPosition: { x: 4, y: 4, z: 5 },
+      chunk,
+      chunkSize,
+      chunkHeight,
+    });
+
+    this.updateVisibility(chunk);
+
     this.chunkMap[key] = chunk;
   }
 

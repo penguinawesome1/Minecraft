@@ -18,6 +18,10 @@ class GameManager {
     this.setupUI(hotbarID, healthbarID);
   }
 
+  setObjects({ world }) {
+    this.world = world;
+  }
+
   setupGameMenus(pauseMenuID, deathMenuID) {
     this.pauseMenu = document.getElementById(pauseMenuID);
     this.deathMenu = document.getElementById(deathMenuID);
@@ -38,10 +42,10 @@ class GameManager {
     this.updateHealthbar();
   }
 
-  saveGame(world) {
+  saveGame() {
     localStorage.setItem(
-      `${this.worldMode}Chunks`,
-      JSON.stringify(world.persistantChunks)
+      `${this.world.worldMode}Chunks`,
+      JSON.stringify(this.world.persistantChunks)
     );
   }
 
