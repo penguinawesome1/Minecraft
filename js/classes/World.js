@@ -63,6 +63,8 @@ class World {
             this.generateOneChunk(chunkX, chunkY);
           if (this.worldMode === "flat")
             this.generateOneChunkFlat(chunkX, chunkY);
+          if (this.worldMode === "skyblock")
+            this.generateOneChunkAir(chunkX, chunkY);
           continue;
         }
 
@@ -241,6 +243,29 @@ class World {
       }
     }
     this.updateVisibility(chunk);
+    this.chunkMap[`${chunkX},${chunkY}`] = chunk;
+  }
+
+  generateOneChunkAir(chunkX, chunkY) {
+    const { chunkSize, chunkHeight } = this;
+    const heightDifference = 5; // height of ground
+    const worldXOffset = chunkX * chunkSize;
+    const worldYOffset = chunkY * chunkSize;
+    const chunk = [];
+
+    for (let y = worldYOffset; y < worldYOffset + chunkSize; y++) {
+      for (let x = worldXOffset; x < worldXOffset + chunkSize; x++) {
+        for (let z = 0; z < chunkHeight; z++) {
+          const gridPosition = { x, y, z };
+          chunk.push({
+            blockNum: Renderer.AIR,
+            position: toScreenCoordinate(gridPosition),
+            gridPosition,
+            visible: false,
+          });
+        }
+      }
+    }
     this.chunkMap[`${chunkX},${chunkY}`] = chunk;
   }
 
