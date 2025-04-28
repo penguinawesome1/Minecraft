@@ -364,7 +364,7 @@ class World {
               heightDifference,
             }),
             position: toScreenCoordinate(gridPosition),
-            gridPositon,
+            gridPosition,
           });
         }
       }
